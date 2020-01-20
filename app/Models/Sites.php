@@ -14,7 +14,7 @@ class Sites extends Models
     *
     * @var array
     */
-    protected $fillable = ['name', 'domain', 'analytics', 'meta'];
+    protected $fillable = ['network_id','name', 'domain', 'analytics', 'footer', 'meta'];
 
     /**
      * The attributes that should be cast to native types.
@@ -23,7 +23,8 @@ class Sites extends Models
      */
     protected $casts = [
         'analytics' => 'object',
-        'meta' => 'object'
+        'meta' => 'object',
+        'footer' => 'object'
     ];
 
     /**
@@ -50,11 +51,18 @@ class Sites extends Models
         return $this->hasMany('App\Models\Galleries', 'site_id', 'id');
     }
 
+    public function network()
+    {
+        return $this->belongsTo('App\Models\Networks');
+    }
+
     public static function rules(array $rules = [])
     {
         return collect([
           'name' => 'required|unique:sites,name|string|max:63',
-          'domain' => 'required|url|max:127'
+          'domain' => 'required|url|max:127',
+          'logo'  => 'mimes:jpeg,jpg,png|required|max:2048',
+          'shortcut_icon' => 'mimes:jpeg,jpg,png,ico|required|max:100'
       ])->merge($rules);
     }
 }

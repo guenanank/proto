@@ -19,6 +19,9 @@ Route::resources([
   'sites' => 'SitesController',
   'channels' => 'ChannelsController',
   'topics' => 'TopicsController',
+  'posts' => 'PostsController',
+  'users' => 'UsersController',
+  'visualinteractives' => 'VisualInteractivesController'
 ]);
 
 Route::post('sites/dataTable', 'SitesController@dataTable');
@@ -34,3 +37,6 @@ Route::prefix('galleries')->group(function () {
     Route::match(['PUT','PATCH'], '{type}/{gallery}', 'GalleriesController@update')->name('galleries.update');
     Route::delete('{type}/{gallery}', 'GalleriesController@destroy')->name('galleries.destroy');
 });
+
+Auth::routes();
+Route::get('/home', 'HomeController@index')->name('home');

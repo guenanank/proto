@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use Illuminate\Support\Str;
 
-class Channels extends Models
+class Visualinteractives extends Models
 {
     use SoftDeletes;
 
@@ -17,7 +17,7 @@ class Channels extends Models
     *
     * @var array
     */
-    protected $fillable = ['site_id', 'name', 'slug', 'sub', 'displayed', 'sort', 'meta', 'collaboration'];
+    protected $fillable = ['name', 'cover', 'site_id', 'section_id', 'meta'];
 
     /**
      * The attributes that should be cast to native types.
@@ -25,8 +25,7 @@ class Channels extends Models
      * @var array
      */
     protected $casts = [
-        'displayed' => 'boolean',
-        'collaboration' => 'object',
+        'cover' => 'object',
         'meta' => 'object'
     ];
 
@@ -35,7 +34,7 @@ class Channels extends Models
      *
      * @var array
      */
-    protected $with = ['site:id,name,domain'];
+    protected $with = ['site:id,name,domain','channel:id,name'];
 
     /**
      * The "booting" method of the model.
@@ -51,18 +50,18 @@ class Channels extends Models
     /**
      * Get the channels that owns the parent.
      */
-    public function parent()
-    {
-        return $this->belongsTo('App\Models\Channels', 'id', 'sub');
-    }
+    // public function parent()
+    // {
+    //     return $this->belongsTo('App\Models\Channels', 'id', 'sub');
+    // }
 
     /**
      * Get the channels that owns the child.
      */
-    public function children()
-    {
-        return $this->hasMany('App\Models\Channels', 'sub', 'id');
-    }
+    // public function children()
+    // {
+    //     return $this->hasMany('App\Models\Channels', 'sub', 'id');
+    // }
 
     /**
      * Get the topic that owns the site.
@@ -70,6 +69,12 @@ class Channels extends Models
     public function site()
     {
         return $this->belongsTo('App\Models\Sites');
+    }
+
+    public function channel()
+    {
+        return $this->belongsTo('App\Models\Channels');
+
     }
 
     /**
@@ -81,7 +86,7 @@ class Channels extends Models
     public function setNameAttribute($value)
     {
         $this->attributes['name'] = $value;
-        $this->attributes['slug'] = Str::slug($value);
+        // $this->attributes['slug'] = Str::slug($value);
     }
 
     public static function rules(array $rules = [])
@@ -89,8 +94,6 @@ class Channels extends Models
         return collect([
             'site_id' => 'exists:sites.id|nullable',
             'name' => 'required|unique:channels,name|string|max:127',
-            'sub' => 'exists:channels,id|nullable',
-            'displayed' => 'boolean',
             'sort' => 'numeric|nullable',
             'cover' => 'image'
         ])->merge($rules);

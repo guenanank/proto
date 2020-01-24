@@ -53,7 +53,7 @@
             </div>
 
             <div class="clearfix">&nbsp;</div>
-            <div class="clearfix">&nbsp;</div>
+            <!-- <div class="clearfix">&nbsp;</div> -->
             <div class="container">
                 <p>Metadata</p>
                 <div class="form-group">

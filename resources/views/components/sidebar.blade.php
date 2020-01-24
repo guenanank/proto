@@ -35,7 +35,7 @@
         </a>
         <div id="personnelArea" class="collapse" aria-labelledby="headingPersonnelArea" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a href="#" class="collapse-item">Authentications</a>
+                <a href="{{ route('users.index') }}" class="collapse-item">Users</a>
                 <a href="#" class="collapse-item">Authorizations</a>
                 <a href="#" class="collapse-item">Menu</a>
             </div>
@@ -52,6 +52,7 @@
             <div class="bg-white py-2 collapse-inner rounded">
                 <a href="{{ route('sites.index') }}" class="collapse-item">Site</a>
                 <a href="{{ route('channels.index') }}" class="collapse-item">Channel</a>
+                <a href="{{ route('visualinteractives.index') }}" class="collapse-item">Visual Interactive</a>
                 <a href="#" class="collapse-item">RSS</a>
             </div>
         </div>
@@ -73,7 +74,7 @@
         </a>
         <div id="posts" class="collapse" aria-labelledby="headingPosts" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a href="#" class="collapse-item">Articles</a>
+                <a href="{{route('posts.index')}}" class="collapse-item">Articles</a>
                 <a href="#" class="collapse-item">Images</a>
                 <a href="#" class="collapse-item">Videos</a>
                 <a href="#" class="collapse-item">Recipes</a>

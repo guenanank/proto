@@ -60,13 +60,14 @@
         columnDefs: [{
             targets: 0,
             render: function(data, type, row) {
+                // alert(row.site.domain);
                 return '<strong class="text-info"><a href="' + row.site.domain + '/' + row.slug + '">' + data + '</a></strong>&nbsp;' +
                     '<a href="' + row.site.domain + '" class="badge badge-pill badge-secondary">' + row.site.name + '</a>' +
                     '<p>' + row.meta.description.substr(0, 77) + ' ...</p>' +
                     '<div>' +
-                    '<a class="text-info" href="' + baseUrl + '/topics/' + row.id + '/edit"><i class="fas fa fa-edit"></i>&nbsp;Edit</a>' +
+                    '<a class="text-info" href="' + baseUrl + '/channels/' + row.id + '/edit"><i class="fas fa fa-edit"></i>&nbsp;Edit</a>' +
                     '&nbsp;|&nbsp;' +
-                    '<a class="text-danger delete" href="' + baseUrl + '/topics/' + row.id + '"><i class="fas fa fa-trash"></i>&nbsp;Delete</a>' +
+                    '<a class="text-danger delete" href="' + baseUrl + '/channels/' + row.id + '"><i class="fas fa fa-trash"></i>&nbsp;Delete</a>' +
                     '</div>';
             }
         }, {

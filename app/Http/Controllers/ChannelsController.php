@@ -10,7 +10,9 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 use App\Models\Channels;
+use App\Models\Sites;
 use Recursive;
+use ZipArchive;
 
 class ChannelsController extends Controller
 {
@@ -43,9 +45,9 @@ class ChannelsController extends Controller
      */
     public function create()
     {
-        $recursive = Recursive::make($this->channels, 'id', 'sub');
-        $channels = Recursive::data($recursive, 'name');
-        return view('channels.create', compact('channels'));
+        $channels = Channels::all();
+        $sites = Sites::all();
+        return view('channels.create', compact('channels','sites'));
     }
 
     /**
@@ -55,18 +57,34 @@ class ChannelsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
-        $request->validate(Channels::rules()->toArray());
+    {   
         $data = $request->all();
+        $value = $request->VisualInteractiveFile;
+
+        foreach($value as $value_visual){
+        $filename = $value_visual->getClientOriginalName();
+        $data['collaboration']['VisualInteractiveFIle'] .= $filename.','; 
+        $value_visual->storeAs('folder', $filename);
+        $zip = new ZipArchive();
+        $target_path = public_path('storage/folder/').$filename;
+        $x = $zip->open($target_path);
+		        if ($x) {
+		        	$zip->extractTo(public_path('storage/folder/'));
+                    $zip->close();
+                    storage::delete($target_path);
+                }
+
+        }
+        $covername = ''; 
+        $data['VisualInteractiveCover']->storeAs('folder/'.$filename, $covername);
         if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
             $filename = Str::slug($request->name) . '.' . $request->cover->extension();
             $request->cover->storeAs('images', $filename);
             $data['meta']['cover'] = $filename;
         }
+        $data['collaboration']['VisualInteractiveName'] = $data['VisualInteractiveName'];
 
         $create = Channels::create($data);
-        Cache::forget('channels:all');
-        Cache::forever('channels:' . $create->id, $create);
         return response()->json($create);
     }
 
@@ -78,8 +96,7 @@ class ChannelsController extends Controller
      */
     public function edit(Channels $channel)
     {
-        $recursive = Recursive::make($this->channels, 'id', 'sub');
-        $channels = Recursive::data($recursive, 'name');
+        $channels = Channels::all();
         return view('channels.edit', compact('channels', 'channel'));
     }
 
@@ -125,12 +142,8 @@ class ChannelsController extends Controller
      */
     public function destroy(Channels $channel)
     {
-        Cache::forget('channels:' . $channel->id);
-        Cache::forget('channels:all');
-        if (Storage::exists('images' . $channel->meta->cover)) {
-            Storage::delete('images' . $channel->meta->cover);
-        }
-        $delete = $channel->delete();
+        $users = Channels::where('id',$id)->first();
+        $delete = $users->delete($users);
         return response()->json($delete);
     }
 }

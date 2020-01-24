@@ -20,13 +20,14 @@ Route::resources([
   'channels' => 'ChannelsController',
   'topics' => 'TopicsController',
   'posts' => 'PostsController',
-  'users' => 'UsersController',
+  'networks' => 'NetworksController',
   'visualinteractives' => 'VisualInteractivesController'
 ]);
 
 Route::post('sites/dataTable', 'SitesController@dataTable');
 Route::post('channels/dataTable', 'ChannelsController@dataTable');
 Route::post('topics/dataTable', 'TopicsController@dataTable');
+Route::post('networks/dataTable', 'NetworksController@dataTable');
 
 Route::prefix('galleries')->group(function () {
     Route::get('{type}', 'GalleriesController@index')->name('galleries');

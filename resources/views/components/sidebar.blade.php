@@ -50,6 +50,7 @@
         </a>
         <div id="publishings" class="collapse" aria-labelledby="headingPublishings" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
+                 <a href="{{ route('networks.index') }}" class="collapse-item">Network</a>
                 <a href="{{ route('sites.index') }}" class="collapse-item">Site</a>
                 <a href="{{ route('channels.index') }}" class="collapse-item">Channel</a>
                 <a href="{{ route('visualinteractives.index') }}" class="collapse-item">Visual Interactive</a>

@@ -62,6 +62,7 @@
 <script>
     $('span#meta').hide()
     var images = JSON.parse($('span#meta').html());
+    console.log(images);
     $('.fileinput').fileinput({
         theme: 'fas',
         browseLabel: 'Find',

@@ -16,13 +16,17 @@ class SitesTable extends Migration
         Schema::create('sites', function (Blueprint $table) {
             $table->engine = 'InnoDB';
             $table->smallIncrements('id');
+            $table->unsignedSmallInteger('network_id')->index();
             $table->string('name');
             $table->string('domain');
             $table->text('analytics')->nullable()->comment('GA Property/View ID, pageViews, etc...');
+            $table->text('footer')->nullable()->comment('About Us, Editorial, Management, etc...');
             $table->text('meta')->nullable()->comment('Title, Description, Keywords, etc...');
 
             $table->nullableTimestamps();
             $table->softDeletes();
+
+            $table->foreign('network_id')->references('id')->on('networks')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 

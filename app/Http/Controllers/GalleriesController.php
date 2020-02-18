@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Galleries;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+
+use App\Models\MongoDB\Galleries;
 
 class GalleriesController extends Controller
 {
@@ -18,7 +19,7 @@ class GalleriesController extends Controller
      */
     public function index($type)
     {
-        $galleries = Galleries::{$type}()->latest()->simplePaginate(7);
+        $galleries = Galleries::where('type', $type)->latest('creationDate')->simplePaginate(7);
         return view('galleries.' . $type . '.index', compact('galleries'));
     }
 

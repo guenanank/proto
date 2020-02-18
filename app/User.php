@@ -3,12 +3,17 @@
 namespace App;
 
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\MongoDB;
+use Illuminate\Auth\Authenticatable as AuthenticableTrait;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 
-class User extends Authenticatable
+class User extends MongoDB implements AuthenticatableContract, CanResetPasswordContract
 {
+    use AuthenticableTrait;
     use Notifiable;
+    use CanResetPassword;
 
     /**
      * The attributes that are mass assignable.
@@ -16,7 +21,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'username', 'email', 'employeeId', 'password', 'profiles', 'oId', 'creationDate', 'removedAt'
     ];
 
     /**
@@ -35,5 +40,6 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'profiles' => 'collection'
     ];
 }

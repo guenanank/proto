@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'default' => env('ELASTIC_CONNECTION', 'local'),
+    'default' => env('ELASTIC_CONNECTION', 'default'),
 
     /*
     |--------------------------------------------------------------------------
@@ -26,7 +26,7 @@ return [
 
     'connections' => [
 
-        'local' => [
+        'default' => [
 
             'servers' => [
 
@@ -41,10 +41,10 @@ return [
             ],
 
 
-            'index' => env('ELASTIC_INDEX', 'articles'),
+            'index' => env('ELASTIC_INDEX', 'article'),
 
             // Elasticsearch handlers
-            // 'handler' => new \Aws\ElasticsearchService\ElasticsearchPhpHandler(env('AWS_DEFAULT_REGION', 'ap-southeast-2')),
+            'handler' => new \Aws\ElasticsearchService\ElasticsearchPhpHandler(env('AWS_REGION', 'ap-southeast-2')),
         ]
     ],
 
@@ -63,67 +63,27 @@ return [
 
     'indices' => [
 
-        'channels' => [
+        'my_index_1' => [
 
-            'aliases' => [
-                'channel'
+            "aliases" => [
+                "my_index"
             ],
 
             'settings' => [
-                'number_of_shards' => 1,
-                'number_of_replicas' => 0,
+                "number_of_shards" => 1,
+                "number_of_replicas" => 0,
             ],
 
-            'mappings?include_type_name=true' => [
-                'data' => [
-                    'properties' => [
-                        'name' => [ 'type' => 'text' ],
-                        'slug' => [ 'type' => 'keyword' ],
-                        'sub' => [ 'type' => 'text' ],
-                        'displayed' => [ 'type' => 'boolean' ],
-                        'sort' => [ 'type' => 'byte' ],
-                        'ga_id' => [ 'type' => 'integer' ],
-                        'meta' => [ 'type' => 'object' ],
-                        'analytics' => [ 'type' => 'object' ],
-                        'logs' => [ 'type' => 'nested' ],
-                    ]
-                ]
-            ]
-
-        ],
-
-        'articles' => [
-
-            'aliases' => [
-                'article'
-            ],
-
-            'settings' => [
-                'number_of_shards' => 3,
-                'number_of_replicas' => 0,
-            ],
-
-            'mappings?include_type_name=true' => [
+            'mappings' => [
                 'posts' => [
-                    'properties' => [
-                        'headline' => [ 'type' => 'object' ],
-                        'slug' => [ 'type' => 'keyword' ],
-                        'cover' => [ 'type' => 'object' ],
-                        'published' => [ 'type' => 'date' ],
-                        'channel' => [ 'type' => 'nested' ],
-                        'body' => [ 'type' => 'text' ],
-                        'media' => [ 'type' => 'object' ],
-                        'reporter' => [ 'type' => 'object' ],
-                        'editor' => [ 'type' => 'object' ],
-                        'commentable' => [ 'type' => 'boolean' ],
-                        'editorials' => [ 'type' => 'nested' ],
-                        'relates' => [ 'type' => 'object' ],
-                        'tags' => [ 'type' => 'nested' ],
-                        'analytics' => [ 'type' => 'object' ],
-                        'logs' => [ 'type' => 'nested' ],
+                    "properties" => [
+                        'title' => [
+                            'type' => 'string'
+                        ]
                     ]
                 ]
             ]
+
         ]
 
     ]

@@ -5,6 +5,8 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
+use App\Jobs\ExtractArticle as Article;
+
 class Kernel extends ConsoleKernel
 {
     /**
@@ -13,7 +15,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        // Commands\ExtractImages::class
     ];
 
     /**
@@ -26,6 +28,15 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')
         //          ->hourly();
+
+        $schedule->command('queue:work')->everyMinute()->withoutOverlapping();
+
+        $schedule->command('extract:user')->everyMinute();
+        $schedule->command('extract:section')->everyMinute();
+        $schedule->command('extract:topic')->everyMinute();
+        $schedule->command('extract:image')->everyMinute()->withoutOverlapping(5);
+
+        // $schedule->job(new Article)->everyMinute();
     }
 
     /**
@@ -38,5 +49,15 @@ class Kernel extends ConsoleKernel
         $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
+    }
+
+    /**
+     * Get the timezone that should be used by default for scheduled events.
+     *
+     * @return \DateTimeZone|string|null
+     */
+    protected function scheduleTimezone()
+    {
+        return config('app.timezone');
     }
 }

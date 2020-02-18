@@ -17,6 +17,6 @@ class SiteScope implements Scope
      */
     public function apply(Builder $builder, Model $model)
     {
-        $builder->whereIn('site_id', [1]);
+        $builder->whereIn('mediaId', ['5e341237fdce270e81644315']);
     }
 }

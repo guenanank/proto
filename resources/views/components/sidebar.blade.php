@@ -50,7 +50,8 @@
         </a>
         <div id="publishings" class="collapse" aria-labelledby="headingPublishings" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a href="{{ route('sites.index') }}" class="collapse-item">Site</a>
+                <a href="{{ route('groups.index') }}" class="collapse-item">Group</a>
+                <a href="{{ route('media.index') }}" class="collapse-item">Media</a>
                 <a href="{{ route('channels.index') }}" class="collapse-item">Channel</a>
                 <a href="#" class="collapse-item">RSS</a>
             </div>
@@ -73,6 +74,7 @@
         </a>
         <div id="posts" class="collapse" aria-labelledby="headingPosts" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
+                <a href="#" class="collapse-item">Overview</a>
                 <a href="#" class="collapse-item">Articles</a>
                 <a href="#" class="collapse-item">Images</a>
                 <a href="#" class="collapse-item">Videos</a>
@@ -92,9 +94,10 @@
         </a>
         <div id="galleries" class="collapse" aria-labelledby="headingGalleries" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a href="{{ url('galleries/images') }}" class="collapse-item">Image</a>
-                <a href="{{ url('galleries/videos') }}" class="collapse-item">Video</a>
-                <a href="{{ url('galleries/podcasts') }}" class="collapse-item">Podcast</a>
+                <a href="{{ route('galleries', ['type' => 'images']) }}" class="collapse-item">Images</a>
+                <a href="{{ url('galleries/videos') }}" class="collapse-item">Videos</a>
+                <a href="{{ url('galleries/musics') }}" class="collapse-item">Musics</a>
+                <a href="{{ url('galleries/podcasts') }}" class="collapse-item">Podcasts</a>
             </div>
         </div>
     </li>
@@ -114,6 +117,7 @@
         </a>
         <div id="features" class="collapse" aria-labelledby="headingFeatures" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
+                <a href="{{ route('topics.index') }}" class="collapse-item">Topics</a>
                 <a href="#" class="collapse-item">Breakingnews</a>
                 <a href="#" class="collapse-item">Push Notifications</a>
             </div>

@@ -3,7 +3,7 @@
 @section('page_header', 'Image Galleries')
 
 @push('styles')
-<link rel="stylesheet" href="{{ url('css/fileinput.css') }}">
+<link href="{{ mix('/css/fileinput.css') }}" rel="stylesheet" />
 <!-- <link rel="stylesheet" href="{{ url('css/fileinput-rtl.min.css') }}"> -->
 @endpush
 
@@ -25,27 +25,14 @@
             </div>
             <div class="container">
                 <div class="form-group">
-                    <label for="title">Title</label>
-                    <input name="meta[title]" type="text" class="form-control" id="title" aria-describedby="titleHelp" placeholder="Enter images title" value="{{ $gallery->meta->title }}">
-                    <small id="titleHelp" class="form-text text-danger"></small>
-                </div>
-
-                <div class="form-group">
                     <label for="caption">Caption</label>
-                    <input name="meta[caption]" type="text" class="form-control" id="caption" aria-describedby="captionHelp" placeholder="Enter images caption" value="{{ $gallery->meta->caption }}">
+                    <input name="meta[caption]" type="text" class="form-control" id="caption" aria-describedby="captionHelp" placeholder="Enter images caption" value="{{ $gallery->meta['caption'] }}">
                     <small id="captionHelp" class="form-text text-danger"></small>
                 </div>
-
                 <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea name="meta[description]" class="form-control autosize" aria-describedby="descriptionHelp" placeholder="Enter images description">{{ $gallery->meta->description }}</textarea>
-                    <small id="descriptionHelp" class="form-text text-danger"></small>
-                </div>
-
-                <div class="form-group">
-                    <label for="photographer">Photographer/Credit</label>
-                    <input name="meta[photographer]" type="text" class="form-control" id="photographer" aria-describedby="photographerHelp" placeholder="Enter images photographer or credit" value="{{ $gallery->meta->photographer }}">
-                    <small id="photographerHelp" class="form-text text-danger"></small>
+                    <label for="photographer">Credit</label>
+                    <input name="meta[credit]" type="text" class="form-control" id="credit" aria-describedby="creditHelp" placeholder="Enter images credit" value="{{ $gallery->meta['credit'] }}">
+                    <small id="creditHelp" class="form-text text-danger"></small>
                 </div>
             </div>
 
@@ -56,12 +43,14 @@
 @endsection
 
 @push('scripts')
-<script src="{{ url('js/fileinput.min.js') }}"></script>
-<script src="{{ url('js/fileinput-fa-theme.min.js') }}"></script>
-<script src="{{ url('js/autosize.js') }}"></script>
+<script src="{{ mix('/js/autosize.js') }}"></script>
+<script src="{{ mix('/js/fileinput.js') }}"></script>
+<script src="{{ mix('/js/fileinput-fa.js') }}"></script>
 <script>
-    $('span#meta').hide()
+    $('span#meta').hide();
+    const path = 'https://gridnetwork.s3-ap-southeast-1.amazonaws.com/';
     var images = JSON.parse($('span#meta').html());
+    console.log(images);
     $('.fileinput').fileinput({
         theme: 'fas',
         browseLabel: 'Find',
@@ -73,13 +62,13 @@
         maxFileSize: 2048,
         allowedFileTypes: ['image'],
         overwriteInitial: true,
-        initialCaption: images.filename,
-        initialPreview: [images.path],
+        initialCaption: images.caption,
+        initialPreview: [path + images.path],
         initialPreviewAsData: true,
         initialPreviewConfig: [{
-                caption: images.title,
+                caption: images.caption,
                 filename: images.filename,
-                downloadUrl: images.path,
+                downloadUrl: path + images.path,
                 size: images.size,
                 width: images.dimension.width,
                 key: 1

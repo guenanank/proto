@@ -43,39 +43,51 @@ return [
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
 
-        'mysql' => [
-            'driver' => 'mysql',
-            'url' => env('DATABASE_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'prototype'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
+        // 'old' => [
+        //     'driver' => 'mysql',
+        //     'url' => env('DATABASE_URL'),
+        //     'host' => env('MYSQL_HOST', '127.0.0.1'),
+        //     'port' => env('MYSQL_PORT', '3306'),
+        //     'database' => env('MYSQL_DATABASE', 'prototype'),
+        //     'username' => env('MYSQL_USERNAME', 'homestead'),
+        //     'password' => env('MYSQL_PASSWORD', 'secret'),
+        //     'unix_socket' => env('MYSQL_SOCKET', ''),
+        //     'charset' => 'utf8mb4',
+        //     'collation' => 'utf8mb4_unicode_ci',
+        //     'prefix' => '',
+        //     'prefix_indexes' => true,
+        //     'strict' => true,
+        //     'engine' => null,
+        //     'options' => extension_loaded('pdo_mysql') ? array_filter([
+        //         PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+        //     ]) : [],
+        // ],
 
         'live' => [
             'driver' => 'mysql',
-            'host' => env('DB_HOST_LIVE', '127.0.0.1'),
-            'port' => env('DB_PORT_LIVE', '3307'),
-            'database' => env('DB_DATABASE_LIVE', 'gridparentingdb'),
-            'username' => env('DB_USERNAME_LIVE', 'AppUser'),
-            'password' => env('DB_PASSWORD_LIVE', 'NbDR4TODFPGx'),
+            'host' => env('DB_HOST_LIVE'),
+            'port' => env('DB_PORT_LIVE'),
+            'database' => env('DB_NAME_LIVE'),
+            'username' => env('DB_USERNAME_LIVE'),
+            'password' => env('DB_PASSWORD_LIVE'),
             'unix_socket' => env('DB_SOCKET'),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
             'strict' => true,
             'engine' => null,
+        ],
+
+        'mongodb' => [
+            'driver' => 'mongodb',
+            'host' => env('MONGO_HOST', '127.0.0.1'),
+            'port' => env('MONGO_PORT', 27017),
+            'database' => env('MONGO_DATABASE', 'gateway'),
+            'username' => env('MONGO_USERNAME', 'homestead'),
+            'password' => env('MONGO_PASSWORD', 'secret'),
+            'options'  => [
+                'database' => 'admin' // sets the authentication database required by mongo 3
+            ]
         ],
 
         'pgsql' => [

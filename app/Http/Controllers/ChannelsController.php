@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
-use App\Models\Channels;
+use App\Models\MongoDB\Groups;
+use App\Models\MongoDB\Media;
+use App\Models\MongoDB\Channels;
 use Recursive;
 
 class ChannelsController extends Controller
@@ -21,19 +23,11 @@ class ChannelsController extends Controller
      */
     public function index()
     {
-        return view('channels.index');
-    }
+        $channels = Cache::rememberForever('channels:all', function () {
+            return Channels::latest('lastUpdate')->get();
+        });
 
-    /**
-     * Resource JSON data.
-     *
-     * @return \DataTables
-     */
-    public function dataTable(Request $request)
-    {
-        $columns = ['channels.id', 'channels.site_id', 'channels.name', 'channels.slug', 'channels.sub', 'channels.meta', 'channels.displayed', 'channels.created_at', 'channels.updated_at'];
-        $channels = Channels::select($columns);
-        return datatables()->eloquent($channels)->toJson();
+        return view('channels.index', compact('channels'));
     }
 
     /**
@@ -43,9 +37,11 @@ class ChannelsController extends Controller
      */
     public function create()
     {
-        $recursive = Recursive::make($this->channels, 'id', 'sub');
+        $groups = Cache::get('groups:all');
+        $recursive = Recursive::make(Cache::get('channels:all'), 'id', 'sub');
         $channels = Recursive::data($recursive, 'name');
-        return view('channels.create', compact('channels'));
+        // $channels = Cache::get('channels:all');
+        return view('channels.create', compact('groups', 'channels'));
     }
 
     /**
@@ -58,15 +54,16 @@ class ChannelsController extends Controller
     {
         $request->validate(Channels::rules()->toArray());
         $data = $request->all();
+        $media = Cache::get('media:' . $request->mediaId);
+        $path = sprintf('%s/%s/channels/', Str::slug($media->group->name), Str::slug($media->name));
         if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
-            $filename = Str::slug($request->name) . '.' . $request->cover->extension();
-            $request->cover->storeAs('images', $filename);
-            $data['meta']['cover'] = $filename;
+            $data['meta']['cover'] = Str::slug($request->name) . '.' . $request->cover->extension();
+            $request->cover->storeAs($path, $data['meta']['cover']);
         }
 
         $create = Channels::create($data);
         Cache::forget('channels:all');
-        Cache::forever('channels:' . $create->id, $create);
+        Cache::forever('channels:' . $create->_id, $create);
         return response()->json($create);
     }
 
@@ -78,9 +75,12 @@ class ChannelsController extends Controller
      */
     public function edit(Channels $channel)
     {
-        $recursive = Recursive::make($this->channels, 'id', 'sub');
-        $channels = Recursive::data($recursive, 'name');
-        return view('channels.edit', compact('channels', 'channel'));
+        $groups = Cache::get('groups:all');
+        // $recursive = Recursive::make(Channels::all(), '_id', 'sub');
+        // $channels = Recursive::data($recursive, 'name');
+        $channels = Cache::get('channels:all');
+        // $channels = Channels::all();
+        return view('channels.edit', compact('groups', 'channels', 'channel'));
     }
 
     /**
@@ -95,25 +95,27 @@ class ChannelsController extends Controller
         Validator::make($request->all(), $channel->rules([
           'name' => [
               'required', 'string', 'max:127',
-              Rule::unique($channel->getTable())->ignore($channel->id),
+              Rule::unique($channel->getTable())->ignore($channel->_id),
           ]
         ])->toArray());
 
-
         $data = $request->all();
+        $media = Cache::get('media:' . $request->mediaId);
+        $path = sprintf('%s/%s/channels/', Str::slug($media->group->name), Str::slug($media->name));
         if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
-            $filename = Str::slug($request->name) . '.' . $request->cover->extension();
-            if (Storage::exists('images' . $channel->meta->cover)) {
-                Storage::delete('images' . $channel->meta->cover);
+            $data['meta']['cover'] = Str::slug($request->name) . '.' . $request->cover->extension();
+            if ($channel->meta->has('cover') && Storage::exists($path . $channel->meta['cover'])) {
+                Storage::delete($path . $channel->meta['cover']);
             }
-            $request->cover->storeAs('images', $filename);
-            $data['meta']['cover'] = $filename;
+            $request->cover->storeAs($path, $data['meta']['cover']);
+        } else {
+            $data['meta']['cover'] = $channel->meta['cover'];
         }
 
         $update = $channel->update($data);
-        Cache::forget('channels:' . $channel->id);
+        Cache::forget('channels:' . $channel->_id);
         Cache::forget('channels:all');
-        Cache::forever('channels:' . $channel->id, $channel);
+        Cache::forever('channels:' . $channel->_id, $channel);
         return response()->json($update);
     }
 
@@ -125,11 +127,14 @@ class ChannelsController extends Controller
      */
     public function destroy(Channels $channel)
     {
-        Cache::forget('channels:' . $channel->id);
-        Cache::forget('channels:all');
-        if (Storage::exists('images' . $channel->meta->cover)) {
-            Storage::delete('images' . $channel->meta->cover);
+        $channel->media->load('group');
+        $path = sprintf('%s/%s/channel/', Str::slug($channel->media->group->name), Str::slug($channel->media->name));
+        if ($channel->meta->has('cover') && Storage::exists($path . $channel->meta['cover'])) {
+            Storage::delete($path . $channel->meta['cover']);
         }
+
+        Cache::forget('channels:' . $channel->_id);
+        Cache::forget('channels:all');
         $delete = $channel->delete();
         return response()->json($delete);
     }

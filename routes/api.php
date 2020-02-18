@@ -16,3 +16,10 @@ use Illuminate\Http\Request;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::group(['namespace' => 'Api'], function () {
+    // Route::get('site', 'Extract@site');
+    Route::get('section', 'Extract@section');
+    // Route::get('topic', 'Extract@topic');
+    // Route::get('image', 'Extract@image');
+});

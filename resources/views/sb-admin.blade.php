@@ -12,15 +12,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title itemprop="name">@yield('title', 'Home') </title>
     <!-- Styles -->
-    <link href="{{ url('css/fontawesome.css') }}" rel="stylesheet">
+    <link href="{{ mix('/css/fontawesome.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
-    <link href="{{ url('css/sweetalert.css') }}" rel="stylesheet">
-    <link href="{{ url('css/datatables.css') }}" rel="stylesheet">
-    <link href="{{ url('css/keyTable.dataTables.min.css') }}" rel="stylesheet">
+    <link href="{{ mix('/css/sweetalert2.css') }}" rel="stylesheet">
+    <link href="{{ mix('/css/dataTables.bootstrap4.css') }}" rel="stylesheet">
 
-    <link href="{{ url('css/app.css') }}" rel="stylesheet">
-    <link href="{{ url('css/css-loader.css') }}" rel="stylesheet">
+    <link href="{{ mix('/css/sb-admin-2.css') }}" rel="stylesheet">
+    <link href="{{ mix('/css/loader.css') }}" rel="stylesheet">
 
     @stack('styles')
 
@@ -59,7 +58,7 @@
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>Copyright &copy; Your Website {{ date('Y') }}</span>
+                        <span>Copyright &copy; {{ ucfirst(config('app.name')) }} {{ date('Y') }}</span>
                     </div>
                 </div>
             </footer>
@@ -85,7 +84,7 @@
                 <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="login.html">Logout</a>
+                    <a class="btn btn-primary" href="{{ route('logout') }}">Logout</a>
                 </div>
             </div>
         </div>
@@ -95,12 +94,11 @@
     <div class="loader loader-default" data-text></div>
 
     <!-- scripts -->
-    <script src="{{ url('js/jquery.js?v=' . rand()) }}"></script>
+    <script src="{{ mix('/js/jquery.js') }}"></script>
     <script>
         (function($) {
             "use strict";
-
-            var baseUrl = $('base').attr('href');
+            const baseUrl = $('base').attr('href');
             var token = $('meta[name="csrf-token"]').attr('content');
             $.ajaxSetup({
                 headers: {
@@ -110,16 +108,17 @@
             });
         })(jQuery);
     </script>
-    <script src="{{ url('js/bootstrap.bundle.js') }}"></script>
-    <script src="{{ url('js/moment.js') }}"></script>
-    <script src="{{ url('js/moment-timezone-with-data.js') }}"></script>
-    <script src="{{ url('js/jquery.easing.js') }}"></script>
-    <script src="{{ url('js/sweetalert.js') }}"></script>
+    <script src="{{ mix('/js/bootstrap.bundle.js') }}"></script>
+    <script src="{{ mix('/js/moment.js') }}"></script>
+    <script src="{{ mix('/js/moment-timezone.js') }}"></script>
+    <script src="{{ mix('/js/jquery.easing.js') }}"></script>
+    <script src="{{ mix('/js/sweetalert2.js') }}"></script>
 
-    <script src="{{ url('js/datatables.js') }}"></script>
-    <script src="{{ url('js/dataTables.keyTable.min.js') }}"></script>
+    <script src="{{ mix('/js/jquery.dataTables.js') }}"></script>
+    <script src="{{ mix('/js/dataTables.bootstrap4.js') }}"></script>
+
     <script>
-        // moment.tz.setDefault('Asia/Jakarta');
+        moment.tz.setDefault('Asia/Jakarta');
         // moment.locale('id');
         // $.extend($.fn.dataTable.defaults, {
         //     keys: true,
@@ -149,8 +148,9 @@
             return 'Rp. ' + regex.slice(0, -3);
         };
     </script>
-    <script src="{{ url('js/ajaxForm.js') }}"></script>
-    <script src="{{ url('js/app.js') }}"></script>
+
+    <script src="{{ mix('/js/ajaxForm.js') }}"></script>
+    <script src="{{ mix('/js/sb-admin-2.js') }}"></script>
     @stack('scripts')
 
     <script>
@@ -180,6 +180,33 @@
                 $(this).ajaxDelete();
             });
 
+            if ($('.selectpicker')[0]) {
+                $('.selectpicker').selectpicker();
+            }
+
+            if ($('.autosize')[0]) {
+                autosize($('.autosize'));
+            }
+
+            if ($('.colorPicker')[0]) {
+                $('.colorPicker').colorpicker();
+            }
+
+            if ($('.fileInput')[0]) {
+                $('.fileInput').fileinput({
+                    theme: 'fas',
+                    browseLabel: 'Find',
+                    showRemove: false,
+                    showUpload: false,
+                    showPreview: false
+                });
+            }
+
+            if ($('#datetimepicker')[0]) {
+                $('#datetimepicker').datetimepicker({
+                    format: 'YYYY-MM-DD HH:mm:ss'
+                });
+            }
         });
 
         console.info('%cI\'m watching you bitch !', [

@@ -156,7 +156,7 @@ return [
         Illuminate\Pipeline\PipelineServiceProvider::class,
         Illuminate\Queue\QueueServiceProvider::class,
         Illuminate\Redis\RedisServiceProvider::class,
-        Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
+        // Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
         Illuminate\Session\SessionServiceProvider::class,
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
@@ -178,12 +178,16 @@ return [
         /*
          * Customs
          */
+        Aws\Laravel\AwsServiceProvider::class,
+
         App\Providers\GuzzleServiceProvider::class,
         App\Providers\RecursiveServiceProvider::class,
         Barryvdh\Debugbar\ServiceProvider::class,
         Basemkhirat\Elasticsearch\ElasticsearchServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
         Yajra\DataTables\DataTablesServiceProvider::class,
+        Jenssegers\Mongodb\MongodbServiceProvider::class,
+        Jenssegers\Mongodb\Auth\PasswordResetServiceProvider::class,
     ],
 
     /*
@@ -238,12 +242,15 @@ return [
         /*
          * Customs
          */
+        'AWS' => Aws\Laravel\AwsFacade::class,
+
         'Guzzle' => App\Facades\Guzzle::class,
         'Recursive' => App\Facades\Recursive::class,
         'Debugbar' => Barryvdh\Debugbar\Facade::class,
         'Es' => Basemkhirat\Elasticsearch\Facades\ES::class,
         'Image' => Intervention\Image\Facades\Image::class,
         'DataTables' => Yajra\DataTables\Facades\DataTables::class,
+        'Moloquent' => Jenssegers\Mongodb\Eloquent\Model::class,
 
     ],
 

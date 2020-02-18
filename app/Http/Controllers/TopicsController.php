@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Topics;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+
+use App\Models\MongoDB\Topics;
 
 class TopicsController extends Controller
 {
@@ -29,9 +30,11 @@ class TopicsController extends Controller
      */
     public function dataTable(Request $request)
     {
-        $columns = ['topics.id', 'topics.site_id', 'topics.title', 'topics.slug', 'topics.published', 'topics.meta', 'topics.created_at', 'topics.updated_at'];
-        $topics = Topics::select($columns);
-        return datatables()->eloquent($topics)->toJson();
+        $topics = Cache::rememberForever('topics:all', function () {
+            return Topics::latest('lastUpdate')->get();
+        });
+
+        return datatables()->of($topics)->toJson();
     }
 
     /**
@@ -41,7 +44,8 @@ class TopicsController extends Controller
      */
     public function create()
     {
-        return view('topics.create');
+        $groups = Cache::get('groups:all');
+        return view('topics.create', compact('groups'));
     }
 
     /**
@@ -54,23 +58,16 @@ class TopicsController extends Controller
     {
         $request->validate(Topics::rules()->toArray());
         $data = $request->all();
+        $media = Cache::get('media:' . $request->mediaId);
+        $path = sprintf('%s/%s/topic/', strtolower($media->group->code), Str::slug($media->name));
         if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
-            $filename = Str::slug($request->name) . '.' . $request->cover->extension();
-            $request->cover->storeAs('images', $filename);
-            $data['meta']['cover'] = $filename;
+            $data['meta']['cover'] = Str::slug($request->title) . '.' . $request->cover->extension();
+            $request->cover->storeAs($path, $data['meta']['cover']);
         }
 
         $create = Topics::create($data);
-
-        Cache::tags(['site', 'topics'])->forever($create->id, $create);
-        $all = Cache::pull('topics');
-        if (is_null($all)) {
-            $all = collect()->put($create->id, $create);
-        } else {
-            $all->put($create->id, $create);
-        }
-        Cache::forever('topics', $all->sort());
-
+        Cache::forget('topics:all');
+        Cache::forever('topics:' . $create->_id, $create);
         return response()->json($create);
     }
 
@@ -82,7 +79,8 @@ class TopicsController extends Controller
      */
     public function edit(Topics $topic)
     {
-        return view('topics.edit', compact('topic'));
+        $groups = Cache::get('groups:all');
+        return view('topics.edit', compact('groups', 'topic'));
     }
 
     /**
@@ -101,29 +99,24 @@ class TopicsController extends Controller
           ]
         ])->toArray());
 
+        $topic->media->load('group');
         $data = $request->all();
+        $path = sprintf('%s/%s/topic/', strtolower($topic->media->group->code), Str::slug($topic->media->name));
+
         if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
-            $filename = Str::slug($request->name) . '.' . $request->cover->extension();
-            if (Storage::exists('images' . $topic->meta->cover)) {
-                Storage::delete('images' . $topic->meta->cover);
+            $data['meta']['cover'] = Str::slug($request->title) . '.' . $request->cover->extension();
+            if ($topic->meta->has('cover') && Storage::exists($path . $topic->meta['cover'])) {
+                Storage::delete($path . $topic->meta['cover']);
             }
-            $request->cover->storeAs('images', $filename);
-            $data['meta']['cover'] = $filename;
+            $request->cover->storeAs($path, $data['meta']['cover']);
+        } else {
+            $data['meta']['cover'] = $topic->meta['cover'];
         }
 
         $update = $topic->update($data);
-
-        Cache::tags(['site', 'topics'])->forget($topic->id);
-        Cache::tags(['site', 'topics'])->forever($topic->id, $topic);
-
-        $all = Cache::pull('topics');
-        if (is_null($all)) {
-            $all = collect()->put($topic->id, $topic);
-        } else {
-            $all->forget($topic->id)->put($topic->id, $topic);
-        }
-        Cache::set('topics', $all->sort());
-
+        Cache::forget('topics:' . $topic->_id);
+        Cache::forget('topics:all');
+        Cache::forever('topics:' . $topic->_id, $topic);
         return response()->json($update);
     }
 
@@ -135,14 +128,14 @@ class TopicsController extends Controller
      */
     public function destroy(Topics $topic)
     {
-        Cache::tags(['site', 'topics'])->forget($topic->id);
-        $all = Cache::pull('topics');
-        $all->forget($topic->id);
-        Cache::forever('topics', $all->sort());
-
-        if (Storage::exists('images' . $topic->meta->cover)) {
-            Storage::delete('images' . $topic->meta->cover);
+        $topic->media->load('group');
+        $path = sprintf('%s/%s/topic/', strtolower($topic->media->group->code), Str::slug($topic->media->name));
+        if ($topic->meta->has('cover') && Storage::exists($path . $topic->meta['cover'])) {
+            Storage::delete($path . $topic->meta['cover']);
         }
+
+        Cache::forget('topics:' . $topic->_id);
+        Cache::forget('topics:all');
         $delete = $topic->delete();
         return response()->json($delete);
     }

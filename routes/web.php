@@ -18,7 +18,6 @@ Route::get('/logout', '\App\Http\Controllers\Auth\LoginController@logout');
         return view('dashboard.home');
     });
 
-<<<<<<< HEAD
     Route::get('profiles', 'ProfilesController@index')->name('profiles.index');
 
     Route::resources([
@@ -44,31 +43,3 @@ Route::get('/logout', '\App\Http\Controllers\Auth\LoginController@logout');
 // });
 
 Route::get('/home', 'HomeController@index')->name('home');
-=======
-Route::resources([
-  'sites' => 'SitesController',
-  'channels' => 'ChannelsController',
-  'topics' => 'TopicsController',
-  'posts' => 'PostsController',
-  'networks' => 'NetworksController',
-  'visualinteractives' => 'VisualInteractivesController'
-]);
-
-Route::post('sites/dataTable', 'SitesController@dataTable');
-Route::post('channels/dataTable', 'ChannelsController@dataTable');
-Route::post('topics/dataTable', 'TopicsController@dataTable');
-Route::post('networks/dataTable', 'NetworksController@dataTable');
-
-Route::prefix('galleries')->group(function () {
-    Route::get('{type}', 'GalleriesController@index')->name('galleries');
-    Route::get('{type}/create', 'GalleriesController@create')->name('galleries.create');
-    Route::get('{type}/{gallery}', 'GalleriesController@show')->name('galleries.show');
-    Route::post('{type}', 'GalleriesController@store')->name('galleries.store');
-    Route::get('{type}/{gallery}/edit', 'GalleriesController@edit')->name('galleries.edit');
-    Route::match(['PUT','PATCH'], '{type}/{gallery}', 'GalleriesController@update')->name('galleries.update');
-    Route::delete('{type}/{gallery}', 'GalleriesController@destroy')->name('galleries.destroy');
-});
-
-Auth::routes();
-Route::get('/home', 'HomeController@index')->name('home');
->>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b

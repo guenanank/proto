@@ -35,7 +35,7 @@
         </a>
         <div id="personnelArea" class="collapse" aria-labelledby="headingPersonnelArea" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a href="{{ route('users.index') }}" class="collapse-item">Users</a>
+                <a href="#" class="collapse-item">Users</a>
                 <a href="#" class="collapse-item">Authorizations</a>
                 <a href="#" class="collapse-item">Menu</a>
             </div>
@@ -50,15 +50,10 @@
         </a>
         <div id="publishings" class="collapse" aria-labelledby="headingPublishings" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-<<<<<<< HEAD
                 <a href="{{ route('groups.index') }}" class="collapse-item">Group</a>
                 <a href="{{ route('media.index') }}" class="collapse-item">Media</a>
-=======
-                 <a href="{{ route('networks.index') }}" class="collapse-item">Network</a>
-                <a href="{{ route('sites.index') }}" class="collapse-item">Site</a>
->>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b
                 <a href="{{ route('channels.index') }}" class="collapse-item">Channel</a>
-                <a href="{{ route('visualinteractives.index') }}" class="collapse-item">Visual Interactive</a>
+                <a href="#" class="collapse-item">Visual Interactive</a>
                 <a href="#" class="collapse-item">RSS</a>
             </div>
         </div>
@@ -80,14 +75,11 @@
         </a>
         <div id="posts" class="collapse" aria-labelledby="headingPosts" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-<<<<<<< HEAD
                 <a href="#" class="collapse-item">Overview</a>
                 <a href="#" class="collapse-item">Articles</a>
-=======
-                <a href="{{route('posts.index')}}" class="collapse-item">Articles</a>
->>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b
                 <a href="#" class="collapse-item">Images</a>
                 <a href="#" class="collapse-item">Videos</a>
+                <a href="#" class="collapse-item">Podcasts</a>
                 <a href="#" class="collapse-item">Recipes</a>
                 <a href="#" class="collapse-item">Pricelists</a>
                 <a href="#" class="collapse-item">Charts</a>

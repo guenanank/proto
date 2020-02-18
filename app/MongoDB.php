@@ -38,9 +38,4 @@ class MongoDB extends Moloquent
         //     $builder->orderBy('name', 'asc');
         // });
     }
-<<<<<<< HEAD:app/MongoDB.php
 }
-=======
-
-}
->>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b:app/Models.php

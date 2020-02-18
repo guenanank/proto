@@ -9,10 +9,16 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
+<<<<<<< HEAD
 use App\Models\MongoDB\Groups;
 use App\Models\MongoDB\Media;
 use App\Models\MongoDB\Channels;
+=======
+use App\Models\Channels;
+use App\Models\Sites;
+>>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b
 use Recursive;
+use ZipArchive;
 
 class ChannelsController extends Controller
 {
@@ -37,11 +43,17 @@ class ChannelsController extends Controller
      */
     public function create()
     {
+<<<<<<< HEAD
         $groups = Cache::get('groups:all');
         $recursive = Recursive::make(Cache::get('channels:all'), 'id', 'sub');
         $channels = Recursive::data($recursive, 'name');
         // $channels = Cache::get('channels:all');
         return view('channels.create', compact('groups', 'channels'));
+=======
+        $channels = Channels::all();
+        $sites = Sites::all();
+        return view('channels.create', compact('channels','sites'));
+>>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b
     }
 
     /**
@@ -51,19 +63,43 @@ class ChannelsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
-        $request->validate(Channels::rules()->toArray());
+    {   
         $data = $request->all();
+<<<<<<< HEAD
         $media = Cache::get('media:' . $request->mediaId);
         $path = sprintf('%s/%s/channels/', Str::slug($media->group->name), Str::slug($media->name));
+=======
+        $value = $request->VisualInteractiveFile;
+
+        foreach($value as $value_visual){
+        $filename = $value_visual->getClientOriginalName();
+        $data['collaboration']['VisualInteractiveFIle'] .= $filename.','; 
+        $value_visual->storeAs('folder', $filename);
+        $zip = new ZipArchive();
+        $target_path = public_path('storage/folder/').$filename;
+        $x = $zip->open($target_path);
+		        if ($x) {
+		        	$zip->extractTo(public_path('storage/folder/'));
+                    $zip->close();
+                    storage::delete($target_path);
+                }
+
+        }
+        $covername = ''; 
+        $data['VisualInteractiveCover']->storeAs('folder/'.$filename, $covername);
+>>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b
         if ($request->hasFile('cover') && $request->file('cover')->isValid()) {
             $data['meta']['cover'] = Str::slug($request->name) . '.' . $request->cover->extension();
             $request->cover->storeAs($path, $data['meta']['cover']);
         }
+        $data['collaboration']['VisualInteractiveName'] = $data['VisualInteractiveName'];
 
         $create = Channels::create($data);
+<<<<<<< HEAD
         Cache::forget('channels:all');
         Cache::forever('channels:' . $create->_id, $create);
+=======
+>>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b
         return response()->json($create);
     }
 
@@ -75,12 +111,17 @@ class ChannelsController extends Controller
      */
     public function edit(Channels $channel)
     {
+<<<<<<< HEAD
         $groups = Cache::get('groups:all');
         // $recursive = Recursive::make(Channels::all(), '_id', 'sub');
         // $channels = Recursive::data($recursive, 'name');
         $channels = Cache::get('channels:all');
         // $channels = Channels::all();
         return view('channels.edit', compact('groups', 'channels', 'channel'));
+=======
+        $channels = Channels::all();
+        return view('channels.edit', compact('channels', 'channel'));
+>>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b
     }
 
     /**
@@ -127,6 +168,7 @@ class ChannelsController extends Controller
      */
     public function destroy(Channels $channel)
     {
+<<<<<<< HEAD
         $channel->media->load('group');
         $path = sprintf('%s/%s/channel/', Str::slug($channel->media->group->name), Str::slug($channel->media->name));
         if ($channel->meta->has('cover') && Storage::exists($path . $channel->meta['cover'])) {
@@ -136,6 +178,10 @@ class ChannelsController extends Controller
         Cache::forget('channels:' . $channel->_id);
         Cache::forget('channels:all');
         $delete = $channel->delete();
+=======
+        $users = Channels::where('id',$id)->first();
+        $delete = $users->delete($users);
+>>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b
         return response()->json($delete);
     }
 }

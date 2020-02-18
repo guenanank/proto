@@ -18,8 +18,14 @@ use Faker\Generator as Faker;
 
 $factory->define(Sites::class, function (Faker $faker) {
     return [
+      'network_id' =>rand(1,4),
       'name' => $faker->domainWord,
       'domain' => $faker->domainName,
+      'footer' => [
+          'about_us' => $faker->text,
+          'editorial' => $faker->text,
+          'management' => $faker->text,
+      ],
       'meta' => [
           'title' => $faker->catchPhrase,
           'alias' => $faker->domainWord,

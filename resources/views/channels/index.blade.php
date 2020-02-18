@@ -78,9 +78,41 @@
             [3, 'desc']
         ],
         columnDefs: [{
+<<<<<<< HEAD
             targets: [1, 2, 3],
             visible: false
         }]
+=======
+            targets: 0,
+            render: function(data, type, row) {
+                // alert(row.site.domain);
+                return '<strong class="text-info"><a href="' + row.site.domain + '/' + row.slug + '">' + data + '</a></strong>&nbsp;' +
+                    '<a href="' + row.site.domain + '" class="badge badge-pill badge-secondary">' + row.site.name + '</a>' +
+                    '<p>' + row.meta.description.substr(0, 77) + ' ...</p>' +
+                    '<div>' +
+                    '<a class="text-info" href="' + baseUrl + '/channels/' + row.id + '/edit"><i class="fas fa fa-edit"></i>&nbsp;Edit</a>' +
+                    '&nbsp;|&nbsp;' +
+                    '<a class="text-danger delete" href="' + baseUrl + '/channels/' + row.id + '"><i class="fas fa fa-trash"></i>&nbsp;Delete</a>' +
+                    '</div>';
+            }
+        }, {
+            targets: 1,
+            render: function(data, type, row) {
+                return '<p>' +
+                    '<em>Last updated ' + moment(row.updated_at).fromNow() + '</em><br />' +
+                    '<small>Created at ' + moment(row.created_at).format('LL') + '</small>' +
+                    '</p>';
+            }
+        }],
+        createdRow: function(row, data, dataIndex) {
+            if (data.displayed === false) {
+                $(row).addClass('bg-gray-200');
+            }
+        },
+        drawCallback: function(settings) {
+            $('table#dataTable thead').remove();
+        }
+>>>>>>> 569dac0cb4ec1dc5d8827dbd15061c717814935b
     });
 </script>
 @endpush

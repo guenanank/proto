@@ -4,8 +4,8 @@ namespace App\Models\MongoDB;
 
 use App\MongoDB;
 use App\Scopes\SiteScope;
-use Jenssegers\Mongodb\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Jenssegers\Mongodb\Eloquent\SoftDeletes;
 
 class Posts extends MongoDB
 {
@@ -54,7 +54,7 @@ class Posts extends MongoDB
      *
      * @var array
      */
-    protected $with = ['media', 'channels'];
+    protected $with = ['media'];
 
     /**
      * The "booting" method of the model.
@@ -64,7 +64,19 @@ class Posts extends MongoDB
     public static function boot()
     {
         parent::boot();
-        // static::addGlobalScope(new SiteScope);
+        static::addGlobalScope(new SiteScope);
+    }
+
+    /**
+     * Scope a query to only include posts of given type.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  mixed  $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOfType($query, $type)
+    {
+        return $query->where('type', $type);
     }
 
     /**

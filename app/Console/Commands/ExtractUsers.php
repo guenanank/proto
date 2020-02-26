@@ -8,9 +8,12 @@ use Illuminate\Support\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
+use Intervention\Image\ImageManagerStatic as Image;
+use Illuminate\Support\Facades\Storage;
 
+use App\Models\MongoDB\Media;
 use App\User;
-use App\Jobs\UpdateUsers;
 
 class ExtractUsers extends Command
 {
@@ -29,7 +32,7 @@ class ExtractUsers extends Command
     protected $description = 'Get old data users';
 
     private $client;
-    private $uri = 'https://api.grid.id/site/old';
+    private $uri = 'https://api.gridtechno.com/site/old';
     private $headers = [
       'Content-Type' => 'application/json',
       'Api-Token' => '$2y$10$c1V7USh1HZSr9irAuwVcpOIRoYWhE4PCPI9jh31y4KXnoq4B3DA9C'
@@ -53,17 +56,28 @@ class ExtractUsers extends Command
      */
     public function handle()
     {
-        $lastId = User::count();
-        $client = $this->client->get($this->uri, [
+        // Cache::forget('inUser');
+        // return;
+        $skip = Cache::get('inUser', 0);
+        $interval = 100;
+        $total = $this->client->get($this->uri, [
           'headers' => $this->headers,
-          'query' => ['table' => 'user', 'skip' => $lastId, 'take' => 100, 'order' => 'created_date']
+          'query' => ['table' => 'user', 'type' => 'count']
         ])->getBody();
 
-        $users = json_decode($client->getContents());
-        $bar = $this->output->createProgressBar(count($users));
-        $bar->start();
+        $media = Media::withTrashed()->with('group')->latest('lastUpdate')->get();
 
-        foreach ($users as $user) {
+        if ($skip >= (int) $total->getContents()) {
+            Cache::forget('inUser');
+            return;
+        }
+
+        $client = $this->client->get($this->uri, [
+          'headers' => $this->headers,
+          'query' => ['table' => 'user', 'skip' => $skip, 'take' => $interval, 'order' => 'created_date']
+        ])->getBody();
+
+        foreach (json_decode($client->getContents()) as $user) {
             $field['username'] = $user->username;
             $field['email'] = $user->email;
             $field['password'] = Hash::make('grid2020');
@@ -74,18 +88,39 @@ class ExtractUsers extends Command
             $field['profiles']['birthday'] = null;
             $field['profiles']['marital'] = null;
             $field['profiles']['phone'] = null;
-            $field['profiles']['avatar'] = null;
             $field['profiles']['social']['facebook'] = $user->facebook;
             $field['profiles']['social']['twitter'] = $user->twitter;
             $field['profiles']['social']['instagram'] = null;
-            $field['oId'] = $user->id;
-            $field['creationDate'] = Carbon::parse($user->modified_date);
-            
-            $exec = User::create($field);
-            UpdateUsers::dispatch($exec);
+            $field['creationDate'] = Carbon::parse($user->created_date);
+            if (!$user->status) {
+                $field['removedAt'] = Carbon::parse($user->modified_date);
+            }
 
-            $bar->advance();
+            if (!empty($user->photo) && filter_var($user->photo, FILTER_VALIDATE_URL)) {
+                $path = sprintf('users/avatar/');
+                $filename = sprintf('%s-%s.jpeg', Str::slug($user->fullname), $user->id);
+                $field['profiles']['avatar'] = $filename;
+
+                $imgHeaders = get_headers($user->photo);
+                if (strpos($imgHeaders[0], '404') !== false || strpos($imgHeaders[0], '403') !== false) {
+                    $img = Image::canvas(800, 600)->text($imgHeaders[0], 120, 100);
+                } else {
+                    $img = @getimagesize($user->photo)
+                    ? Image::make($user->photo)
+                    : Image::canvas(800, 600)->text($user->fullname, 120, 100);
+                }
+
+                Storage::put($path . $filename, $img->encode('jpeg', 100), 'public');
+            }
+
+            $userModel = User::updateOrCreate(['oId' => $user->id], $field);
+
+            Cache::forget('users:' . $userModel->id);
+            Cache::forget('users:all');
+            Cache::forever('users:' . $userModel->id, $userModel);
+            $this->line(is_null($userModel) ? 'empty' : sprintf('Extracted %s', $userModel->profiles['fullname']));
         }
-        $bar->finish();
+
+        Cache::increment('inUser', $interval);
     }
 }

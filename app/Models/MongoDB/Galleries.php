@@ -51,6 +51,17 @@ class Galleries extends MongoDB
         return $query->where('type', 'images');
     }
 
+    /**
+     * Scope a query to only include videos.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeVideos($query)
+    {
+        return $query->where('type', 'videos');
+    }
+
     public static function type($type = null)
     {
         $collection = collect(['Images', 'Videos', 'Musics', 'Podcasts']);

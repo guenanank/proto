@@ -5,8 +5,6 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
-use App\Jobs\ExtractArticle as Article;
-
 class Kernel extends ConsoleKernel
 {
     /**
@@ -29,14 +27,15 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')
         //          ->hourly();
 
-        $schedule->command('queue:work')->everyMinute()->withoutOverlapping();
+        // $schedule->command('queue:work')->everyMinute()->withoutOverlapping();
 
-        $schedule->command('extract:user')->everyMinute();
-        $schedule->command('extract:section')->everyMinute();
-        $schedule->command('extract:topic')->everyMinute();
-        $schedule->command('extract:image')->everyMinute()->withoutOverlapping(5);
+        $schedule->command('extract:user')->twiceDaily(22, 3);
+        $schedule->command('extract:section')->twiceDaily(22, 3);
+        $schedule->command('extract:topic')->twiceDaily(22, 3);
+        $schedule->command('extract:image')->everyFiveMinutes();
+        $schedule->command('extract:video')->hourly();
 
-        // $schedule->job(new Article)->everyMinute();
+        $schedule->command('extract:article')->everyMinute();
     }
 
     /**

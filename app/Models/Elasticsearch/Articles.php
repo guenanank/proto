@@ -23,7 +23,8 @@ class Articles extends Model
         'allow_wp' => 'boolean',
         'allow_comment' => 'boolean',
         'photo' => 'collection',
-        'iframe' => 'collection'
+        'iframe' => 'collection',
+        'editor' => 'collection',
     ];
 
     /**
@@ -43,6 +44,38 @@ class Articles extends Model
     protected $appends = ['editor'];
 
     /**
+     * Get the article photos.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    public function getPhotoAttribute($value)
+    {
+        return collect($value)->map(function ($photo) {
+            $src = explode('/', $photo['src']);
+            $id = Str::before(end($src), '.');
+            $image = Galleries::images()->where('oId', $id)->first();
+            return is_null($image) ? [] : $image;
+        });
+    }
+
+    /**
+     * Get the article iframe.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    public function getIframeAttribute($value)
+    {
+        return collect($value)->map(function ($iframe) {
+            $src = explode('/', $iframe['src']);
+            $youtubeId = end($src);
+            $video = Galleries::videos()->where('meta.youtubeId', $youtubeId)->first();
+            return is_null($video) ? [] : $video;
+        });
+    }
+
+    /**
      * Get the article content.
      *
      * @param  string  $value
@@ -50,46 +83,44 @@ class Articles extends Model
      */
     public function getContentAttribute($value)
     {
-        $value = collect(explode('</p>', $value))->transform(function ($p, $index) {
-            $p = trim(preg_replace('#<p(.*?)>#is', '', $p));
-
-            $posImg = (strpos($p, '!--img', 1)) ? strpos($p, '!--img', 1) : 9999;
-            $posIframe = (strpos($p, '!--iframe', 1)) ? strpos($p, '!--iframe', 1) : 9999;
-
-            if ((int) $posImg <= (int) $posIframe) {
-                preg_match('/<!--img(.*?)-->/', $p, $matchImg);
-                $indexImg = isset($matchImg[1]) && $matchImg[1] ? $matchImg[1] - 1 : 0;
-                if (Str::contains($p, '<!--img' . ($indexImg + 1) . '-->')) {
-                    $p = $this->attributes['photo'][$indexImg];
-                }
+        // regex blockquote
+        $value = preg_replace_callback('/<blockquote.*?=".*?".*?>.*?<\/blockquote>/', function ($match) {
+            if (Str::contains($match[0], 'twitter-tweet')) {
+                $twitterUrl = explode('?', Str::after($match[0], 'https://twitter.com/'));
+                return '<p> <!-- https://twitter.com/' . $twitterUrl[0] . ' --> </p>';
+            } elseif (Str::contains($match[0], 'instagram-media')) {
+                $instagramId = explode('/', Str::after($match[0], "https://www.instagram.com/p/"));
+                return '<p> <!-- https://instagram.com/p/' . $instagramId[0] . ' --> </p>';
             } else {
-                preg_match('/<!--iframe(.*?)-->/', $p, $matchFrame);
-                $indexFrame = isset($matchFrame[1]) && $matchFrame[1] ? $matchFrame[1] - 1 : 0;
-                if (Str::contains($p, '<!--iframe' . ($indexFrame + 1) . '-->')) {
-                    $p = $this->attributes['iframe'][$indexFrame];
+                return null;
+            }
+        }, $value);
+
+        // extract read too
+        // preg_match('/<strong>Baca Juga: .*?<\/strong>/i', $value, $readToo);
+        // dd($readToo);
+
+        // explode to collection
+        $value = collect(explode('</p>', $value))->transform(function ($paragraph) {
+            $paragraph = trim(preg_replace('#<p(.*?)>#is', null, $paragraph));
+
+            if (preg_match('/<!--img(.*?)-->/', $paragraph, $keys)) {
+                $i = (int) Str::before(Str::after($paragraph, '<!--img'), '-->');
+                $paragraph = null;
+                if(count($this->attributes['photo']) > 0) {
+                    $paragraph = $this->attributes['photo'][$i > 0 ? $i - 1 : $i];
                 }
+            } elseif (preg_match('/<!--iframe(.*?)-->/', $paragraph, $keys)) {
+                $i = (int) Str::before(Str::after($paragraph, '<!--iframe'), '-->');
+                $paragraph = $this->attributes['iframe'][$i - 1];
             }
 
+            return $paragraph;
+        })->reject(function($paragraph) {
+            return $paragraph == '&nbsp;';
+        })->filter()->toJson();
 
-
-            // if (preg_match('/<!--img(.*?)-->/', $p, $keys)) {
-            //     $cover = $this->attributes['photo'][$index];
-            //     $coverId = explode('/', $cover['src']);
-            //     $coverId = explode('.', end($coverId));
-            //     $coverImg = Galleries::images()->where('oId', $coverId[0])->first();
-            //     if (Str::contains($p, '<!--img' . $index . '-->')) {
-            //         $p = empty($coverImg) ? $cover : $coverImg;
-            //     }
-            // } elseif (preg_match('/<!--iframe(.*?)-->/', $p, $keys)) {
-            //     if (Str::contains($p, '<!--iframe' . $index . '-->')) {
-            //         $p = $this->attributes['iframe'][$index];
-            //     }
-            // }
-
-            return $p;
-        })->filter();
-
-        dd($value);
+        // dd($value);
         return $value;
     }
 
@@ -109,6 +140,7 @@ class Articles extends Model
             ];
         });
     }
+
 
     /**
      * Get the article published date.
@@ -130,7 +162,10 @@ class Articles extends Model
     public function getSourceAttribute($value)
     {
         return collect($value)->map(function ($source) {
-            return $source['name'];
+            return [
+              'url' => $source['website'],
+              'name' => $source['name']
+            ];
         });
     }
 
@@ -144,6 +179,6 @@ class Articles extends Model
     {
         $publishedBy = $this->attributes['published_by'];
         $editor = User::where('oId', $publishedBy['id'])->first();
-        return $editor ? $editor->id : null;
+        return $editor ? $editor : null;
     }
 }

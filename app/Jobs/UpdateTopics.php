@@ -72,7 +72,7 @@ class UpdateTopics implements ShouldQueue
 
         if(!empty($topic->photo_url)) {
             $path = sprintf('%s/%s/topics/', Str::slug($this->medium->group->name), Str::slug($this->medium->name));
-            $filename = sprintf('%s-%s.%s', Str::slug($topic->name), $this->topic->id, pathinfo($topic->photo_url, PATHINFO_EXTENSION));
+            $filename = sprintf('%s-%s.webp', Str::slug($topic->name), $this->topic->id);
             $data['meta']['cover'] = $filename;
 
             $imgHeaders = get_headers($topic->photo_url);
@@ -80,7 +80,7 @@ class UpdateTopics implements ShouldQueue
               ? Image::canvas(800, 600)->text($imgHeaders[11], 120, 100)
               : Image::make($topic->photo_url);
 
-            Storage::put($path . $filename, $img->encode(), 'public');
+            Storage::put($path . $filename, $img->encode('webp'), 'public');
         }
 
         if(!$topic->status) {

@@ -2,10 +2,13 @@
 
 namespace App;
 
-use Jenssegers\Mongodb\Eloquent\Model as Moloquent;
+use Jenssegers\Mongodb\Eloquent\Model;
+use Pimlie\DataTables\Traits\MongodbDataTableTrait;
 
-class MongoDB extends Moloquent
+class MongoDB extends Model
 {
+    use MongodbDataTableTrait;
+
     /**
      * The connection name for the model.
      *

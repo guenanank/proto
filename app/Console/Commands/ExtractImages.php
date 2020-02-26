@@ -31,7 +31,7 @@ class ExtractImages extends Command
     protected $description = 'Get old data images';
 
     private $client;
-    private $uri = 'https://api.grid.id/site/old';
+    private $uri = 'https://api.gridtechno.com/site/old';
     private $headers = [
       'Content-Type' => 'application/json',
       'Api-Token' => '$2y$10$c1V7USh1HZSr9irAuwVcpOIRoYWhE4PCPI9jh31y4KXnoq4B3DA9C'
@@ -53,83 +53,71 @@ class ExtractImages extends Command
      *
      * @return mixed
      */
-    public function handle(Galleries $gallery)
+    public function handle()
     {
-        $lastId = $gallery->images()->withTrashed()->count();
-        $client = $this->client->get($this->uri, [
+        // Cache::forget('inImage');
+        // return;
+        $skip = Cache::get('inImage', 0);
+        $interval = 100;
+        $total = $this->client->get($this->uri, [
           'headers' => $this->headers,
-          'query' => ['table' => 'photo', 'skip' => $lastId, 'take' => 100, 'order' => 'created_date']
+          'query' => ['table' => 'photo', 'type' => 'count']
         ])->getBody();
 
-        $images = json_decode($client->getContents());
-        $media = Media::with('group')->withTrashed()->get();
+        $media = Media::withTrashed()->with('group')->latest('lastUpdate')->get();
 
-        $bar = $this->output->createProgressBar(count($images));
-        $bar->start();
+        if ($skip >= (int) $total->getContents()) {
+            Cache::forget('inImage');
+            return;
+        }
+
+        $client = $this->client->get($this->uri, [
+          'headers' => $this->headers,
+          'query' => ['table' => 'photo', 'skip' => $skip, 'take' => $interval, 'order' => 'created_date']
+        ])->getBody();
 
         $field = ['type' => 'images'];
-        foreach ($images as $image) {
+        foreach (json_decode($client->getContents()) as $image) {
+
             $medium = $media->where('oId', $image->site_id == 0 ? rand(1, $media->count()) : $image->site_id)->first();
             if (empty($medium->group)) {
                 continue;
             }
 
             $created = Carbon::parse($image->created_date);
-
             $imgHeaders = get_headers($image->src);
-            if (strpos($imgHeaders[11], '404') !== false) {
-                $img = Image::canvas(800, 600)->text($imgHeaders[11], 120, 100);
+            if (strpos($imgHeaders[0], '404') !== false || strpos($imgHeaders[0], '403') !== false) {
+                $img = Image::canvas(800, 600)->text($imgHeaders[0], 120, 100);
             } else {
                 $img = @getimagesize($image->src)
                   ? Image::make($image->src)
                   : Image::canvas(800, 600)->text($image->caption, 120, 100);
             }
 
-            // $img = file_exists($image->src) && getimagesize($image->src)
-            //   ? Image::canvas(800, 600)->text($image->caption, 120, 100)
-            //   : Image::make($image->src);
-
-            // $imgHeaders = get_headers($image->src);
-            // if (strpos($imgHeaders[11], '404') !== false) {
-            //     $img = Image::canvas(800, 600)->text($imgHeaders[11], 120, 100);
-            // } else {
-            //     $getContent = file_get_contents($image->src);
-            //     if (empty($getContent)) {
-            //         $img = Image::canvas(800, 600)->text($image->caption, 120, 100);
-            //     } else {
-            //         if (ctype_print($getContent)) {
-            //             $img = Image::canvas(800, 600)->text('Unable to init from given binary data.', 120, 100);
-            //         } else {
-            //             $img = preg_match('~[^\x20-\x7E\t\r\n]~', $getContent) > 0
-            //               ? Image::make($image->src)
-            //               : Image::canvas(800, 600)->text('Unable to init from given binary data.', 120, 100);
-            //         }
-            //     }
-            // }
-
             $path = sprintf('%s/%s/images/%04d/%02d/%02d/', Str::slug($medium->group->name), Str::slug($medium->name), $created->year, $created->month, $created->day);
+            $filename = empty($image->caption) ? $medium->name : $image->caption;
             $field['mediaId'] = $medium->id;
-            $field['meta']['caption'] = empty($image->caption) ? sprintf('%s-%s', Str::slug($medium->name), Str::uuid()) : $image->caption;
+            $field['meta']['caption'] = $image->caption;
             $field['meta']['source'] = empty($image->source) ? null : $image->source;
             $field['meta']['credit'] = empty($image->author) ? null : $image->author;
-            $field['meta']['filename'] = Str::slug($field['meta']['caption']) . '.' . pathinfo($image->src, PATHINFO_EXTENSION);
+            $field['meta']['filename'] = sprintf('%s-%s.jpeg', Str::slug($filename), $image->id);
             $field['meta']['path'] = $path . $field['meta']['filename'];
-            $field['meta']['mime'] = $img->mime();
             $field['meta']['dimension']['height'] = $img->height();
             $field['meta']['dimension']['width'] = $img->width();
             $field['meta']['size'] = $img->filesize();
-            $field['oId'] = $image->id;
-            if (!$image->status) {
-                $field['removedAt'] = Carbon::now();
-            }
             $field['creationDate'] = $created;
+            // if (!$image->status) {
+            //     $field['removedAt'] = Carbon::now();
+            // }
 
-            $exec = Galleries::updateOrCreate($field, ['oId' => $image->id]);
-            Storage::put($field['meta']['path'], $img->encode(), 'public');
-            Cache::forever('galleries:images:' . $exec->id, $exec->load('media'));
-
-            $bar->advance();
+            $imageModel = Galleries::withTrashed()->updateOrCreate(['oId' => $image->id], $field);
+            Storage::put($field['meta']['path'], $img->encode('jpeg'), 'public');
+            Cache::forget('galleries:' . $imageModel->id);
+            Cache::forget('galleries:images:all');
+            Cache::forever('galleries:' . $imageModel->id, $imageModel->load('media'));
+            $this->line(is_null($imageModel) ? 'empty' : sprintf('Extracted %s', $imageModel->meta['caption']));
         }
-        $bar->finish();
+
+        Cache::increment('inImage', $interval);
     }
 }

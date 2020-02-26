@@ -7,10 +7,10 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Cache;
 
 use App\Models\MongoDB\Media;
 use App\Models\MongoDB\Channels;
-use App\Jobs\UpdateChannels;
 
 class ExtractSections extends Command
 {
@@ -29,7 +29,7 @@ class ExtractSections extends Command
     protected $description = 'Get old data sections';
 
     private $client;
-    private $uri = 'https://api.grid.id/site/old';
+    private $uri = 'https://api.gridtechno.com/site/old';
     private $headers = [
       'Content-Type' => 'application/json',
       'Api-Token' => '$2y$10$c1V7USh1HZSr9irAuwVcpOIRoYWhE4PCPI9jh31y4KXnoq4B3DA9C'
@@ -51,46 +51,63 @@ class ExtractSections extends Command
      *
      * @return mixed
      */
-    public function handle(Channels $channel)
+    public function handle()
     {
-        $lastId = Channels::withTrashed()->count();
-        $client = $this->client->get($this->uri, [
+        // Cache::forget('inChannel');
+        // return;
+        $skip = Cache::get('inChannel', 0);
+        $interval = 100;
+        $total = $this->client->get($this->uri, [
           'headers' => $this->headers,
-          'query' => ['table' => 'section', 'skip' => $lastId, 'take' => 100, 'order' => 'created_date']
+          'query' => ['table' => 'section', 'type' => 'count']
         ])->getBody();
 
-        $channels = json_decode($client->getContents());
-        $media = Media::with('group')->withTrashed()->get();
+        $media = Media::withTrashed()->with('group')->latest('lastUpdate')->get();
 
-        $bar = $this->output->createProgressBar(count($channels));
-        $bar->start();
+        if ($skip >= (int) $total->getContents()) {
+            Cache::forget('inChannel');
+            return;
+        }
 
-        foreach ($channels as $channel) {
-            $medium = $media->where('oId', $channel->site_id == 0 ? rand(1, $media->count()) : $channel->site_id)->first();
+        $client = $this->client->get($this->uri, [
+          'headers' => $this->headers,
+          'query' => ['table' => 'section', 'skip' => $skip, 'take' => $interval, 'order' => 'created_date']
+        ])->getBody();
+
+        foreach(json_decode($client->getContents()) as $section) {
+            $medium = $media->where('oId', $section->site_id == 0 ? rand(1, $media->count()) : $section->site_id)->first();
             if (empty($medium->group)) {
                 continue;
             }
 
+            if ($section->parent && $section->parent > 0) {
+                $parent = Channels::withTrashed()->find($section->parent);
+            }
+
             $field['mediaId'] = $medium->id;
-            $field['name'] = $channel->name;
-            $field['slug'] = Str::slug($channel->name);
-            $field['sub'] = null;
-            $field['isDisplayed'] = (bool) $channel->show;
-            $field['sort'] = (int) $channel->order;
+            $field['name'] = $section->name;
+            $field['slug'] = $section->alias;
+            $field['sub'] = !isset($parent) && empty($parent) ? null : $parent->id;;
+            $field['isDisplayed'] = (bool) $section->show;
+            $field['sort'] = (int) $section->order;
             $field['analytics']['viewId'] = null;
-            $field['meta']['title'] = empty($channel->title) ? null : $channel->title;
-            $field['meta']['description'] = empty($channel->description) ? null : $channel->description;
-            $field['meta']['keywords'] = empty($channel->keyword) ? null : $channel->keyword;
+            $field['meta']['title'] = empty($section->title) ? null : $section->title;
+            $field['meta']['description'] = empty($section->description) ? null : $section->description;
+            $field['meta']['keywords'] = empty($section->keyword) ? null : $section->keyword;
             $field['meta']['cover'] = null;
-            $field['oId'] = $channel->id;
-            $field['creationDate'] = Carbon::parse($channel->created_date);
+            $field['creationDate'] = Carbon::parse($section->created_date);
+            if(!$section->status) {
+                $field['removedAt'] = Carbon::parse($section->modified_date);
+            }
 
-            $exec = Channels::create($field);
-            UpdateChannels::dispatch($exec);
+            $channel = Channels::withTrashed()->updateOrCreate(['oId' => $section->id], $field);
 
-            $bar->advance();
+            Cache::forget('channels:' . $channel->id);
+            Cache::forget('channels:all');
+            Cache::forever('channels:' . $channel->id, $channel->load('media'));
+            $this->line(is_null($channel) ? 'empty' : sprintf('Extracted %s', $channel->name));
         }
 
-        $bar->finish();
+        Cache::increment('inChannel', $interval);
     }
 }

@@ -76,7 +76,7 @@
         <div id="posts" class="collapse" aria-labelledby="headingPosts" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a href="#" class="collapse-item">Overview</a>
-                <a href="#" class="collapse-item">Articles</a>
+                <a href="{{ route('posts', ['type' => 'articles']) }}" class="collapse-item">Articles</a>
                 <a href="#" class="collapse-item">Images</a>
                 <a href="#" class="collapse-item">Videos</a>
                 <a href="#" class="collapse-item">Podcasts</a>
@@ -97,7 +97,7 @@
         <div id="galleries" class="collapse" aria-labelledby="headingGalleries" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a href="{{ route('galleries', ['type' => 'images']) }}" class="collapse-item">Images</a>
-                <a href="{{ url('galleries/videos') }}" class="collapse-item">Videos</a>
+                <a href="{{ route('galleries', ['type' => 'videos']) }}" class="collapse-item">Videos</a>
                 <a href="{{ url('galleries/musics') }}" class="collapse-item">Musics</a>
                 <a href="{{ url('galleries/podcasts') }}" class="collapse-item">Podcasts</a>
             </div>

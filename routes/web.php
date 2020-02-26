@@ -30,6 +30,7 @@ Route::get('/logout', '\App\Http\Controllers\Auth\LoginController@logout');
     Route::post('media/dataTable', 'MediaController@dataTable');
     Route::post('channels/dataTable', 'ChannelsController@dataTable');
     Route::post('topics/dataTable', 'TopicsController@dataTable');
+    Route::post('posts/dataTable', 'PostsController@dataTable');
 
     Route::prefix('galleries')->group(function () {
         Route::get('{type}', 'GalleriesController@index')->name('galleries');
@@ -39,6 +40,11 @@ Route::get('/logout', '\App\Http\Controllers\Auth\LoginController@logout');
         Route::get('{type}/{gallery}/edit', 'GalleriesController@edit')->name('galleries.edit');
         Route::match(['PUT','PATCH'], '{type}/{gallery}', 'GalleriesController@update')->name('galleries.update');
         Route::delete('{type}/{gallery}', 'GalleriesController@destroy')->name('galleries.destroy');
+    });
+
+    Route::prefix('posts')->group(function() {
+        Route::get('{type}', 'PostsController@index')->name('posts');
+        Route::get('{type}/create', 'PostsController@create')->name('posts.create');
     });
 // });
 

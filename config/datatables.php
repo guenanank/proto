@@ -45,10 +45,20 @@ return [
      * This is where you can register your custom dataTables builder.
      */
     'engines'        => [
-        'eloquent'   => Yajra\DataTables\EloquentDataTable::class,
-        'query'      => Yajra\DataTables\QueryDataTable::class,
-        'collection' => Yajra\DataTables\CollectionDataTable::class,
-        'resource'   => Yajra\DataTables\ApiResourceDataTable::class,
+        // The Jenssegers\Mongodb classes extend the default Query/Eloquent classes
+        // thus the engines need to be listed above the default engines
+        // to make sure they are tried first
+        'moloquent'      => Pimlie\DataTables\MongodbDataTable::class,
+        'mongodb-query'  => Pimlie\DataTables\MongodbQueryDataTable::class,
+        'mongodb-hybrid' => Pimlie\DataTables\HybridMongodbQueryDataTable::class,
+
+        'eloquent'       => Yajra\DataTables\EloquentDataTable::class,
+        'query-builder'  => Yajra\DataTables\QueryDataTable::class,
+        'collection'     => Yajra\DataTables\CollectionDataTable::class,
+        // 'eloquent'   => Yajra\DataTables\EloquentDataTable::class,
+        // 'query'      => Yajra\DataTables\QueryDataTable::class,
+        // 'collection' => Yajra\DataTables\CollectionDataTable::class,
+        // 'resource'   => Yajra\DataTables\ApiResourceDataTable::class,
     ],
 
     /*
@@ -57,6 +67,9 @@ return [
      * Note, only change this if you know what you are doing!
      */
     'builders'       => [
+        //Jenssegers\Mongodb\Eloquent\Builder::class             => 'moloquent',
+        //Jenssegers\Mongodb\Query\Builder::class                => 'mongodb-query',
+        //Jenssegers\Mongodb\Helpers\EloquentBuilder::class      => 'eloquent',
         //Illuminate\Database\Eloquent\Relations\Relation::class => 'eloquent',
         //Illuminate\Database\Eloquent\Builder::class            => 'eloquent',
         //Illuminate\Database\Query\Builder::class               => 'query',

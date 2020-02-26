@@ -42,13 +42,13 @@
                 <tr>
                     <td>
                         <strong class="text-lg">
-                          <a href="{{ $medium->domain }}" target="_blank">{{ $medium->name }}</a>
+                            <a href="{{ $medium->domain }}" target="_blank">{{ $medium->name }}</a>
                         </strong>
                         <p>{{ $medium->meta->has('title') ? $medium->meta['title'] : null }}</p>
                         <div class="small">
-                            <a class="text-gray-600" href="{{ route('media.edit', ['id' => $medium->id]) }}"><i class="fas fa fa-pencil-alt"></i>&nbsp;Edit</a>
+                            <a class="text-gray-500 delete" href="{{ route('media.destroy', ['id' => $medium->id]) }}"><i class="fas fa fa-trash"></i></a>
                             &nbsp;|&nbsp;
-                            <a class="text-gray-500 delete" href="{{ route('media.destroy', ['id' => $medium->id]) }}"><i class="fas fa fa-trash"></i>&nbsp;Delete</a>
+                            <a class="text-gray-600" href="{{ route('media.edit', ['id' => $medium->id]) }}"><i class="fas fa fa-pencil-alt"></i>&nbsp;Edit</a>
                         </div>
                     </td>
                     <td>{{ $medium->meta['title'] }}</td>

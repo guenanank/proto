@@ -43,9 +43,9 @@
                         <strong class="text-lg">{{ $group->name }}</strong>
                         <p>{{ $group->meta->has('title') ? $group->meta['title'] : null }}</p>
                         <div class="small">
-                            <a class="text-gray-600" href="{{ route('groups.edit', ['id' => $group->id]) }}"><i class="fas fa fa-pencil-alt"></i>&nbsp;Edit</a>
+                            <a class="text-gray-500 delete" href="{{ route('groups.destroy', ['id' => $group->id]) }}"><i class="fas fa fa-trash"></i></a>
                             &nbsp;|&nbsp;
-                            <a class="text-gray-500 delete" href="{{ route('groups.destroy', ['id' => $group->id]) }}"><i class="fas fa fa-trash"></i>&nbsp;Delete</a>
+                            <a class="text-gray-600" href="{{ route('groups.edit', ['id' => $group->id]) }}"><i class="fas fa fa-pencil-alt"></i>&nbsp;Edit</a>
                         </div>
                     </td>
                     <td>{{ $group->meta['title'] }}</td>

@@ -185,9 +185,10 @@ return [
         Barryvdh\Debugbar\ServiceProvider::class,
         Basemkhirat\Elasticsearch\ElasticsearchServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
-        Yajra\DataTables\DataTablesServiceProvider::class,
         Jenssegers\Mongodb\MongodbServiceProvider::class,
         Jenssegers\Mongodb\Auth\PasswordResetServiceProvider::class,
+        Yajra\DataTables\DataTablesServiceProvider::class,
+        Pimlie\DataTables\MongodbDataTablesServiceProvider::class,
     ],
 
     /*

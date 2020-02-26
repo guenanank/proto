@@ -35,18 +35,18 @@ class Channels extends MongoDB
      *
      * @var array
      */
-    protected $with = ['media', 'parent', 'children'];
+    // protected $with = ['media', 'parent', 'children'];
 
     /**
      * The "booting" method of the model.
      *
      * @return void
      */
-    public static function boot()
-    {
-        parent::boot();
-        // static::addGlobalScope(new SiteScope);
-    }
+    // public static function boot()
+    // {
+    //     parent::boot();
+    //     static::addGlobalScope(new SiteScope);
+    // }
 
     /**
      * Get the channels that owns the parent.

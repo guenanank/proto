@@ -61,7 +61,7 @@ class UpdateUsers implements ShouldQueue
 
         if(!empty($user->photo)) {
             $path = sprintf('users/avatar/');
-            $filename = sprintf('%s-%s.%s', Str::slug($user->fullname), $this->user->id, pathinfo($user->photo, PATHINFO_EXTENSION));
+            $filename = sprintf('%s-%s.webp', Str::slug($user->fullname), $this->user->id);
             $data['profiles']['avatar'] = $filename;
 
             $imgHeaders = get_headers($user->photo);
@@ -69,7 +69,7 @@ class UpdateUsers implements ShouldQueue
               ? Image::canvas(800, 600)->text($imgHeaders[11], 120, 100)
               : Image::make($user->photo);
 
-            Storage::put($path . $filename, $img->encode(), 'public');
+            Storage::put($path . $filename, $img->encode('webp'), 'public');
         }
 
         if(!$user->status) {

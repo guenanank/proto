@@ -24,11 +24,10 @@ class ChannelsController extends Controller
      */
     public function index()
     {
-        // $channels = Cache::rememberForever('channels:all', function () {
-        //     return Channels::latest('lastUpdate')->get();
-        // });
+        $channels = Cache::rememberForever('channels:all', function () {
+            return Channels::latest('lastUpdate')->get();
+        });
 
-        $channels = Channels::latest('lastUpdate')->get();
         return view('channels.index', compact('channels'));
     }
 

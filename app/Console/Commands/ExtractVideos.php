@@ -31,7 +31,7 @@ class ExtractVideos extends Command
     protected $description = 'Get old data video';
 
     private $client;
-    private $uri = 'https://api.gridtechno.com/site/old';
+    private $uri = 'https://api.gridtechno.com/extract/';
     private $headers = [
       'Content-Type' => 'application/json',
       'Api-Token' => '$2y$10$c1V7USh1HZSr9irAuwVcpOIRoYWhE4PCPI9jh31y4KXnoq4B3DA9C'
@@ -45,7 +45,7 @@ class ExtractVideos extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->client = new Client;
+        $this->client = new Client(['headers' => $this->headers]);
     }
 
     /**
@@ -59,24 +59,36 @@ class ExtractVideos extends Command
         // return;
         $skip = Cache::get('inVideo', 0);
         $interval = 100;
-        $total = $this->client->get($this->uri, [
-          'headers' => $this->headers,
-          'query' => ['table' => 'video', 'type' => 'count']
+        $total = $this->client->get($this->uri . 'count', [
+          'query' => [
+            'table' => 'video',
+            'where' => true,
+            'field' => 'created_date',
+            'operand' => '>=',
+            'param' => '0000-00-00 00:00:00'
+          ]
         ])->getBody();
 
-        $media = Media::withTrashed()->with('group')->latest('lastUpdate')->get();
+        $media = Cache::rememberForever('media:all', function() {
+            return Media::withTrashed()->with('group')->get();
+        });
 
         if ($skip >= (int) $total->getContents()) {
             Cache::forget('inVideo');
             return;
         }
 
-        $client = $this->client->get($this->uri, [
-          'headers' => $this->headers,
-          'query' => ['table' => 'video', 'skip' => $skip, 'take' => $interval, 'order' => 'created_date']
+        $client = $this->client->get($this->uri . 'videos', [
+          'query' => [
+            'field' => 'created_date',
+            'operand' => '>=',
+            'param' => '0000-00-00 00:00:00',
+            'skip' => $skip,
+            'take' => $interval,
+            'order' => 'created_date'
+          ]
         ])->getBody();
 
-        $field = ['type' => 'videos'];
         foreach (json_decode($client->getContents()) as $video) {
             $medium = $media->where('oId', $video->site_id == 0 ? rand(1, $media->count()) : $video->site_id)->first();
             if (empty($medium->group)) {
@@ -103,18 +115,18 @@ class ExtractVideos extends Command
             $field['meta']['cover']['path'] = $path . $field['meta']['cover']['name'];
             $field['meta']['embed'] = sprintf('https://www.youtube.com/embed/%s', $video->video_id);
             $field['meta']['published'] = Carbon::parse($video->published_date);
-            $field['meta']['statistic'] = [];
+            $field['meta']['statistics'] = [];
             $field['meta']['oId'] = $video->id;
             $field['creationDate'] = $created;
             if (!$video->status) {
                 $field['removedAt'] = Carbon::parse($video->modified_date);
             }
 
-            $videoModel = Galleries::updateOrCreate(['oId' => $video->id], $field);
+            $videoModel = Galleries::updateOrCreate(['type' => 'videos', 'oId' => $video->id], $field);
             Storage::put($field['meta']['cover']['path'], $img->encode('jpeg'), 'public');
             Cache::forget('galleries:' . $videoModel->id);
             Cache::forget('galleries:videos:all');
-            Cache::forever('galleries:videos:' . $videoModel->id, $videoModel->load('media'));
+            // Cache::forever('galleries:videos:' . $videoModel->id, $videoModel->load('media'));
             $this->line(is_null($videoModel) ? 'empty' : sprintf('Extracted %s', $videoModel->meta['title']));
         }
 

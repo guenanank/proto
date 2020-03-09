@@ -28,14 +28,14 @@ class Kernel extends ConsoleKernel
         //          ->hourly();
 
         // $schedule->command('queue:work')->everyMinute()->withoutOverlapping();
-
-        $schedule->command('extract:user')->twiceDaily(22, 3);
-        $schedule->command('extract:section')->twiceDaily(22, 3);
-        $schedule->command('extract:topic')->twiceDaily(22, 3);
-        $schedule->command('extract:image')->everyFiveMinutes();
-        $schedule->command('extract:video')->hourly();
-
-        $schedule->command('extract:article')->everyMinute();
+        $schedule->command('extract:user')->everyMinute()->between('22:00', '23:00')->runInBackground();
+        $schedule->command('extract:section')->everyMinute()->between('24:00', '00:00')->runInBackground();
+        $schedule->command('extract:topic')->everyMinute()->between('10:00', '13:00')->runInBackground();
+        $schedule->command('extract:podcast')->everyMinute()->between('2:00', '3:00')->runInBackground();
+        $schedule->command('extract:music')->everyMinute()->between('3:00', '4:00')->runInBackground();
+        $schedule->command('extract:video')->everyFifteenMinutes()->between('6:00', '17:00')->runInBackground();
+        $schedule->command('extract:image')->everyFiveMinutes()->withoutOverlapping(5);
+        $schedule->command('extract:article')->everyMinute()->withoutOverlapping(5);
     }
 
     /**

@@ -57,19 +57,19 @@
                     <div class="clearfix">&nbsp;</div>
                     <div class="container">
                         <div class="form-group">
-                            <input name="meta[title]" type="text" class="form-control" aria-describedby="metaTitleHelp" placeholder="Title for media" value="{{ $medium->meta->has('title') ? $medium->meta['title'] : null }}">
+                            <input name="meta[title]" type="text" class="form-control" aria-describedby="metaTitleHelp" placeholder="Title for media" value="{{ isset($medium->meta['title']) ? $medium->meta['title'] : null }}">
                             <small id="metaTitleHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
-                            <input name="meta[keywords]" type="text" class="form-control" aria-describedby="metaKeywordsHelp" placeholder="Keywords that describe the media (separated by comma)" value="{{ $medium->meta->has('keywords') ? $medium->meta['keywords'] : null }}">
+                            <input name="meta[keywords]" type="text" class="form-control" aria-describedby="metaKeywordsHelp" placeholder="Keywords that describe the media (separated by comma)" value="{{ isset($medium->meta['keywords']) ? $medium->meta['keywords'] : null }}">
                             <small id="metaKeywordsHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
-                            <input name="meta[color]" type="text" class="form-control colorPicker" aria-describedby="metaColorHelp" placeholder="Color for site" value="{{ $medium->meta->has('color') ? $medium->meta['color'] : null }}">
+                            <input name="meta[color]" type="text" class="form-control colorPicker" aria-describedby="metaColorHelp" placeholder="Color for site" value="{{ isset($medium->meta['color']) ? $medium->meta['color'] : null }}">
                             <small id="metaColorHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
-                            <textarea name="meta[description]" class="form-control autosize" aria-describedby="metaDescriptionHelp" placeholder="Site description">{{ $medium->meta->has('description') ? $medium->meta['description'] : null }}</textarea>
+                            <textarea name="meta[description]" class="form-control autosize" aria-describedby="metaDescriptionHelp" placeholder="Site description">{{ isset($medium->meta['description']) ? $medium->meta['description'] : null }}</textarea>
                             <small id="metaDescriptionHelp" class="form-text text-danger"></small>
                         </div>
                     </div>
@@ -78,11 +78,11 @@
                     <div class="clearfix">&nbsp;</div>
                     <div class="container">
                         <div class="form-group">
-                            <input name="analytics[gaId]" type="text" class="form-control" id="analyticsGaId" aria-describedby="analyticsGaIdHelp" placeholder="Enter media google analytics view id" value="{{ $medium->analytics->has('gaId') ? $medium->analytics['gaId'] : null }}">
+                            <input name="analytics[gaId]" type="text" class="form-control" id="analyticsGaId" aria-describedby="analyticsGaIdHelp" placeholder="Enter media google analytics view id" value="{{ isset($medium->analytics['gaId']) ? $medium->analytics['gaId'] : null }}">
                             <small id="analyticsGaIdHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
-                            <input name="analytics[youtubeChannel]" type="text" class="form-control" id="analyticsYoutubeChannel" aria-describedby="analyticsYoutubeChannelHelp" placeholder="Enter media youtube channel" value="{{ $medium->analytics->has('youtubeChannel') ? $medium->analytics['youtubeChannel'] : null }}">
+                            <input name="analytics[youtubeChannel]" type="text" class="form-control" id="analyticsYoutubeChannel" aria-describedby="analyticsYoutubeChannelHelp" placeholder="Enter media youtube channel" value="{{ isset($medium->analytics['youtubeChannel']) ? $medium->analytics['youtubeChannel'] : null }}">
                             <small id="analyticsYoutubeChannelHelp" class="form-text text-danger"></small>
                         </div>
                     </div>
@@ -92,27 +92,27 @@
                     <div class="container">
                         <div class="form-group">
                             <input type="hidden" name="assets[logo]" />
-                            <input type="file" name="logo" class="form-control-file fileInput" aria-describedby="assetsLogoHelp" data-msg-placeholder="Chose main logo"  data-allowed-file-types="image" value="{{ $medium->assets->has('logo') ? $medium->assets['logo'] : null }}">
+                            <input type="file" name="logo" class="form-control-file fileInput" aria-describedby="assetsLogoHelp" data-msg-placeholder="Chose main logo"  data-allowed-file-types="image" value="{{ isset($medium->assets['logo']) ? $medium->assets['logo'] : null }}">
                             <small id="assetsLogoHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
                             <input type="hidden" name="assets[logoAlt]" />
-                            <input type="file" name="logoAlt" class="form-control-file fileInput" aria-describedby="assetsLogoAltHelp" data-msg-placeholder="Chose logo alternate"  data-allowed-file-types="image" value="{{ $medium->assets->has('logoAlt') ? $medium->assets['logoAlt'] : null }}">
+                            <input type="file" name="logoAlt" class="form-control-file fileInput" aria-describedby="assetsLogoAltHelp" data-msg-placeholder="Chose logo alternate"  data-allowed-file-types="image" value="{{ isset($medium->assets['logoAlt']) ? $medium->assets['logoAlt'] : null }}">
                             <small id="assetsLogoAltHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
                             <input type="hidden" name="assets[icon]" />
-                            <input type="file" name="icon" class="form-control-file fileInput" aria-describedby="assetsIconHelp" data-msg-placeholder="Chose icon"  data-allowed-file-types="image" value="{{ $medium->assets->has('icon') ? $medium->assets['icon'] : null }}">
+                            <input type="file" name="icon" class="form-control-file fileInput" aria-describedby="assetsIconHelp" data-msg-placeholder="Chose icon"  data-allowed-file-types="image" value="{{ isset($medium->assets['icon']) ? $medium->assets['icon'] : null }}">
                             <small id="assetsIconHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
                             <input type="hidden" name="assets[css]" />
-                            <input type="file" name="css" class="form-control-file fileInput" aria-describedby="assetsCssHelp" data-msg-placeholder="Chose file css" data-allowed-file-extension="css" value="{{ $medium->assets->has('css') ? $medium->assets['css'] : null }}">
+                            <input type="file" name="css" class="form-control-file fileInput" aria-describedby="assetsCssHelp" data-msg-placeholder="Chose file css" data-allowed-file-extension="css" value="{{ isset($medium->assets['css']) ? $medium->assets['css'] : null }}">
                             <small id="assetsCssHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
                             <input type="hidden" name="assets[js]" />
-                            <input type="file" name="js" class="form-control-file fileInput" aria-describedby="assetsJsHelp" data-msg-placeholder="Chose file js" data-allowed-file-extension="js" value="{{ $medium->assets->has('js') ? $medium->assets['js'] : null }}">
+                            <input type="file" name="js" class="form-control-file fileInput" aria-describedby="assetsJsHelp" data-msg-placeholder="Chose file js" data-allowed-file-extension="js" value="{{ isset($medium->assets['js']) ? $medium->assets['js'] : null }}">
                             <small id="assetsJsHelp" class="form-text text-danger"></small>
                         </div>
                     </div>
@@ -122,25 +122,25 @@
                     <div class="container">
                         <div class="form-group">
                             <textarea name="masthead[about]" class="form-control autosize" aria-describedby="mastheadAboutHelp" placeholder="Enter about media">
-                              {{ $medium->masthead->has('about') ? $medium->masthead['about'] : null }}
+                              {{ isset($medium->masthead['about']) ? $medium->masthead['about'] : null }}
                             </textarea>
                             <small id="mastheadAboutHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
                             <textarea name="masthead[editorial]" class="form-control autosize" aria-describedby="mastheadEditorialHelp" placeholder="Enter media editorial">
-                              {{ $medium->masthead->has('editorial') ? $medium->masthead['editorial'] : null }}
+                              {{ isset($medium->masthead['editorial']) ? $medium->masthead['editorial'] : null }}
                             </textarea>
                             <small id="mastheadEditorialHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
                             <textarea name="masthead[management]" class="form-control autosize" aria-describedby="mastheadManagementHelp" placeholder="Enter media management">
-                              {{ $medium->masthead->has('management') ? $medium->masthead['management'] : null }}
+                              {{ isset($medium->masthead['management']) ? $medium->masthead['management'] : null }}
                             </textarea>
                             <small id="mastheadManagementHelp" class="form-text text-danger"></small>
                         </div>
                         <div class="form-group">
                             <textarea name="masthead[contact]" class="form-control autosize" aria-describedby="mastheadContactHelp" placeholder="Enter media contact">
-                              {{ $medium->masthead->has('contact') ? $medium->masthead['contact'] : null }}
+                              {{ isset($medium->masthead['contact']) ? $medium->masthead['contact'] : null }}
                             </textarea>
                             <small id="mastheadContactHelp" class="form-text text-danger"></small>
                         </div>

@@ -22,7 +22,7 @@ class Sources extends MongoDB
      * @var array
      */
     protected $casts = [
-        'meta' => 'collection'
+        // 'meta' => 'collection'
     ];
 
     public static function rules(array $rules = [])

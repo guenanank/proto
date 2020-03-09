@@ -17,21 +17,11 @@ class Posts extends MongoDB
     * @var array
     */
     protected $fillable = [
-      'mediaId',
-      'channelId',
-      'type',
-      'headlines',
-      'editorials',
-      'published',
-      'body',
-      'assets',
-      'reporter',
-      'editor',
-      'commentable',
-      'analytics',
-      'oId',
-      'creationDate',
-      'removedAt'
+      'mediaId', 'channelId', 'type',
+      'headlines', 'editorials', 'published',
+      'body', 'assets', 'reporter',
+      'editor', 'commentable', 'analytics',
+      'oId', 'creationDate', 'removedAt'
     ];
 
     /**
@@ -40,13 +30,14 @@ class Posts extends MongoDB
      * @var array
      */
     protected $casts = [
-        'headlines' => 'collection',
-        'editorials' => 'collection',
-        'assets' => 'collection',
-        'reporter' => 'collection',
-        'editor' => 'collection',
+        // 'headlines' => 'collection',
+        // 'editorials' => 'collection',
+        // 'body' => 'collection',
+        // 'assets' => 'collection',
+        // 'reporter' => 'collection',
+        // 'editor' => 'collection',
         'commentable' => 'boolean',
-        'analytics' => 'collection',
+        // 'analytics' => 'collection',
     ];
 
     /**
@@ -64,7 +55,7 @@ class Posts extends MongoDB
     public static function boot()
     {
         parent::boot();
-        static::addGlobalScope(new SiteScope);
+        // static::addGlobalScope(new SiteScope);
     }
 
     /**
@@ -77,6 +68,17 @@ class Posts extends MongoDB
     public function scopeOfType($query, $type)
     {
         return $query->where('type', $type);
+    }
+
+    /**
+     * Scope a query to only include articles.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeArticles($query)
+    {
+        return $query->where('type', 'articles');
     }
 
     /**

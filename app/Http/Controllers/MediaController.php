@@ -78,7 +78,7 @@ class MediaController extends Controller
 
         $create = Media::create($data);
         Cache::forget('media:all');
-        Cache::forever('media:' . $create->_id, $create);
+        Cache::forever('media:' . $create->id, $create);
         return response()->json($create);
     }
 
@@ -106,68 +106,68 @@ class MediaController extends Controller
         Validator::make($request->all(), $medium->rules([
           'name' => [
               'required', 'string', 'max:63',
-              Rule::unique($medium->getTable())->ignore($medium->_id),
+              Rule::unique($medium->getTable())->ignore($medium->id),
           ]
         ])->toArray());
 
         $data = $request->all();
-        $group = Cache::get('groups:' . $request->groupId);
+        $group = Cache::get('groups:all')->where('id', $request->groupId)->first();
         $path = sprintf('%s/%s/media/', Str::slug($group->name), Str::slug($request->name));
 
         if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
             $data['assets']['logo'] = Str::slug($request->name) . '-logo.' . $request->logo->extension();
-            if ($medium->assets->has('logo') && Storage::exists($path . $medium->assets['logo'])) {
+            if (isset($medium->assets['logo']) && Storage::exists($path . $medium->assets['logo'])) {
                 Storage::delete($path . $medium->assets['logo']);
             }
             $request->logo->storeAs($path, $data['assets']['logo']);
         } else {
-            $data['assets']['logo'] = $medium->assets['logo'];
+            $data['assets']['logo'] = isset($medium->assets['logo']) ? $medium->assets['logo'] : null;
         }
 
         if ($request->hasFile('logoAlt') && $request->file('logoAlt')->isValid()) {
             $data['assets']['logoAlt'] = Str::slug($request->name) . '-logo-alt.' . $request->logoAlt->extension();
-            if ($medium->assets->has('logoAlt') && Storage::exists($path . $medium->assets['logoAlt'])) {
+            if (isset($medium->assets['logoAlt']) && Storage::exists($path . $medium->assets['logoAlt'])) {
                 Storage::delete($path . $medium->assets['logoAlt']);
             }
             $request->logoAlt->storeAs($path, $data['assets']['logoAlt']);
         } else {
-            $data['assets']['logoAlt'] = $medium->assets['logoAlt'];
+            $data['assets']['logoAlt'] = isset($medium->assets['logoAlt']) ? $medium->assets['logoAlt'] : null;
         }
 
         if ($request->hasFile('icon') && $request->file('icon')->isValid()) {
             $data['assets']['icon'] = Str::slug($request->name) . '-icon.' . $request->icon->extension();
-            if ($medium->assets->has('icon') && Storage::exists($path . $medium->assets['icon'])) {
+            if (isset($medium->assets['icon']) && Storage::exists($path . $medium->assets['icon'])) {
                 Storage::delete($path . $medium->assets['icon']);
             }
             $request->icon->storeAs($path, $data['assets']['icon']);
         } else {
-            $data['assets']['icon'] = $medium->assets['icon'];
+            $data['assets']['icon'] = isset($medium->assets['icon']) ? $medium->assets['icon'] : null;
         }
 
         if ($request->hasFile('css') && $request->file('css')->isValid()) {
             $data['assets']['css'] = Str::slug($request->name) . '.' . $request->css->extension();
-            if ($medium->assets->has('css') && Storage::exists($path . $medium->assets['css'])) {
+            if (isset($medium->assets['css']) && Storage::exists($path . $medium->assets['css'])) {
                 Storage::delete($path . $medium->assets['css']);
             }
             $request->css->storeAs($path, $data['assets']['css']);
         } else {
-            $data['assets']['css'] = $medium->assets['css'];
+            $data['assets']['css'] = isset($medium->assets['css']) ? $medium->assets['css'] : null;
         }
 
         if ($request->hasFile('js') && $request->file('js')->isValid()) {
             $data['assets']['js'] = Str::slug($request->name) . '.' . $request->js->extension();
-            if ($medium->assets->has('js') && Storage::exists($path . $medium->assets['js'])) {
+            if (isset($medium->assets['js']) && Storage::exists($path . $medium->assets['js'])) {
                 Storage::delete($path . $medium->assets['js']);
             }
             $request->js->storeAs($path, $data['assets']['js']);
         } else {
-            $data['assets']['js'] = $medium->assets['js'];
+            $data['assets']['js'] = isset($medium->assets['js']) ? $medium->assets['js'] : null;
         }
 
         $update = $medium->update($data);
-        Cache::forget('media:' . $medium->_id);
+        Cache::forget('media:' . $medium->id);
         Cache::forget('media:all');
-        Cache::forever('media:' . $medium->_id, $medium);
+        Cache::forever('media:' . $medium->id, $medium);
         return response()->json($update);
     }
 
@@ -203,7 +203,7 @@ class MediaController extends Controller
                 Storage::delete($path . $medium->assets['js']);
             }
         }
-        Cache::forget('media:' . $medium->_id);
+        Cache::forget('media:' . $medium->id);
         Cache::forget('media:all');
         $delete = $medium->delete();
         return response()->json($delete);

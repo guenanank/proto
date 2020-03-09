@@ -23,28 +23,28 @@
                 <small id="nameHelp" class="form-text text-danger"></small>
             </div>
             <div class="form-group">
-                <label for="analyticsGaId">Analytics</label>
-                <input name="analytics[gaId]" type="text" class="form-control" id="analyticsGaId" aria-describedby="analyticsGaIdHelp" placeholder="Enter group google analytics property id" value="{{ $group->analytics->has('gaId') ? $group->analytics['gaId'] : null }}">
-                <small id="analyticsGaIdHelp" class="form-text text-danger"></small>
+                <label for="analyticsPropertyId">Analytics</label>
+                  <input name="analytics[propertyId]" type="text" class="form-control" id="analyticsPropertyId" aria-describedby="analyticsPropertyIdHelp" placeholder="Enter group google analytics property id" value="{{ isset($group->analytics['propertyId']) ? $group->analytics['propertyId'] : null }}">
+                <small id="analyticsPropertyIdHelp" class="form-text text-danger"></small>
             </div>
             <div class="clearfix">&nbsp;</div>
             <div class="container">
                 <hr />
                 <p>Metadata</p>
                 <div class="form-group">
-                    <input name="meta[title]" type="text" class="form-control" aria-describedby="metaTitleHelp" placeholder="Title for group" value="{{ $group->meta->has('title') ? $group->meta['title'] : null }}">
+                    <input name="meta[title]" type="text" class="form-control" aria-describedby="metaTitleHelp" placeholder="Title for group" value="{{ isset($group->meta['title']) ? $group->meta['title'] : null }}">
                     <small id="metaTitleHelp" class="form-text text-danger"></small>
                 </div>
                 <div class="form-group">
-                    <textarea name="meta[description]" class="form-control autosize" aria-describedby="metaDescriptionHelp" placeholder="Site description">{{ $group->meta->has('description') ? $group->meta['description'] : null }}</textarea>
+                    <textarea name="meta[description]" class="form-control autosize" aria-describedby="metaDescriptionHelp" placeholder="Site description">{{ isset($group->meta['description']) ? $group->meta['description'] : null }}</textarea>
                     <small id="metaDescriptionHelp" class="form-text text-danger"></small>
                 </div>
                 <div class="form-group">
-                    <textarea name="meta[privacy]" class="form-control autosize" aria-describedby="metaPrivacyHelp" placeholder="Group privacy rules">{{ $group->meta->has('privacy') ? $group->meta['privacy'] : null }}</textarea>
+                    <textarea name="meta[privacy]" class="form-control autosize" aria-describedby="metaPrivacyHelp" placeholder="Group privacy rules">{{ isset($group->meta['privacy']) ? $group->meta['privacy'] : null }}</textarea>
                     <small id="metaPrivacyHelp" class="form-text text-danger"></small>
                 </div>
                 <div class="form-group">
-                    <textarea name="meta[guideline]" class="form-control autosize" aria-describedby="metaGuidelineHelp" placeholder="Group cyber media guideline">{{ $group->meta->has('guideline') ? $group->meta['guideline'] : null }}</textarea>
+                    <textarea name="meta[guideline]" class="form-control autosize" aria-describedby="metaGuidelineHelp" placeholder="Group cyber media guideline">{{ isset($group->meta['guideline']) ? $group->meta['guideline'] : null }}</textarea>
                     <small id="metaGuidelineHelp" class="form-text text-danger"></small>
                 </div>
             </div>

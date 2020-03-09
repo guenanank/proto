@@ -40,6 +40,6 @@ class User extends MongoDB implements AuthenticatableContract, CanResetPasswordC
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'profiles' => 'collection'
+        // 'profiles' => 'collection'
     ];
 }

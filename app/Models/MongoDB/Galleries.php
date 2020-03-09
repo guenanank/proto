@@ -22,7 +22,7 @@ class Galleries extends MongoDB
      * @var array
      */
     protected $casts = [
-        'meta' => 'collection'
+        // 'meta' => 'collection'
     ];
 
     /**
@@ -38,6 +38,18 @@ class Galleries extends MongoDB
     public function media()
     {
         return $this->belongsTo('App\Models\MongoDB\Media', 'mediaId', '_id');
+    }
+
+    /**
+     * Scope a query to only include galleries of given type.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  mixed  $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOfType($query, $type)
+    {
+        return $query->where('type', $type);
     }
 
     /**

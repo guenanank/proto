@@ -32,7 +32,7 @@ class ExtractUsers extends Command
     protected $description = 'Get old data users';
 
     private $client;
-    private $uri = 'https://api.gridtechno.com/site/old';
+    private $uri = 'https://api.gridtechno.com/extract/';
     private $headers = [
       'Content-Type' => 'application/json',
       'Api-Token' => '$2y$10$c1V7USh1HZSr9irAuwVcpOIRoYWhE4PCPI9jh31y4KXnoq4B3DA9C'
@@ -46,7 +46,7 @@ class ExtractUsers extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->client = new Client;
+        $this->client = new Client(['headers' => $this->headers]);
     }
 
     /**
@@ -60,21 +60,21 @@ class ExtractUsers extends Command
         // return;
         $skip = Cache::get('inUser', 0);
         $interval = 100;
-        $total = $this->client->get($this->uri, [
-          'headers' => $this->headers,
-          'query' => ['table' => 'user', 'type' => 'count']
+        $total = $this->client->get($this->uri . 'count', [
+          'query' => ['table' => 'user']
         ])->getBody();
 
-        $media = Media::withTrashed()->with('group')->latest('lastUpdate')->get();
+        $media = Cache::rememberForever('media:all', function() {
+            return Media::withTrashed()->with('group')->get();
+        });
 
         if ($skip >= (int) $total->getContents()) {
             Cache::forget('inUser');
             return;
         }
 
-        $client = $this->client->get($this->uri, [
-          'headers' => $this->headers,
-          'query' => ['table' => 'user', 'skip' => $skip, 'take' => $interval, 'order' => 'created_date']
+        $client = $this->client->get($this->uri . 'users', [
+          'query' => ['skip' => $skip, 'take' => $interval, 'order' => 'created_date']
         ])->getBody();
 
         foreach (json_decode($client->getContents()) as $user) {
@@ -117,7 +117,7 @@ class ExtractUsers extends Command
 
             Cache::forget('users:' . $userModel->id);
             Cache::forget('users:all');
-            Cache::forever('users:' . $userModel->id, $userModel);
+            // Cache::forever('users:' . $userModel->id, $userModel);
             $this->line(is_null($userModel) ? 'empty' : sprintf('Extracted %s', $userModel->profiles['fullname']));
         }
 

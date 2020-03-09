@@ -31,7 +31,7 @@ class ExtractImages extends Command
     protected $description = 'Get old data images';
 
     private $client;
-    private $uri = 'https://api.gridtechno.com/site/old';
+    private $uri = 'https://api.gridtechno.com/extract/';
     private $headers = [
       'Content-Type' => 'application/json',
       'Api-Token' => '$2y$10$c1V7USh1HZSr9irAuwVcpOIRoYWhE4PCPI9jh31y4KXnoq4B3DA9C'
@@ -45,7 +45,7 @@ class ExtractImages extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->client = new Client;
+        $this->client = new Client(['headers' => $this->headers]);
     }
 
     /**
@@ -55,30 +55,40 @@ class ExtractImages extends Command
      */
     public function handle()
     {
-        // Cache::forget('inImage');
-        // return;
+        // return Cache::forget('inImage');
         $skip = Cache::get('inImage', 0);
         $interval = 100;
-        $total = $this->client->get($this->uri, [
-          'headers' => $this->headers,
-          'query' => ['table' => 'photo', 'type' => 'count']
+        $total = $this->client->get($this->uri . 'count', [
+          'query' => [
+            'table' => 'photo',
+            'where' => true,
+            'field' => 'created_date',
+            'operand' => '>=',
+            'param' => '0000-00-00 00:00:00'
+          ]
         ])->getBody();
 
-        $media = Media::withTrashed()->with('group')->latest('lastUpdate')->get();
+        $media = Cache::rememberForever('media:all', function() {
+            return Media::withTrashed()->with('group')->get();
+        });
 
         if ($skip >= (int) $total->getContents()) {
             Cache::forget('inImage');
             return;
         }
 
-        $client = $this->client->get($this->uri, [
-          'headers' => $this->headers,
-          'query' => ['table' => 'photo', 'skip' => $skip, 'take' => $interval, 'order' => 'created_date']
+        $client = $this->client->get($this->uri . 'images', [
+          'query' => [
+            'field' => 'created_date',
+            'operand' => '>=',
+            'param' => '0000-00-00 00:00:00',
+            'skip' => $skip,
+            'take' => $interval,
+            'order' => 'created_date'
+          ]
         ])->getBody();
 
-        $field = ['type' => 'images'];
         foreach (json_decode($client->getContents()) as $image) {
-
             $medium = $media->where('oId', $image->site_id == 0 ? rand(1, $media->count()) : $image->site_id)->first();
             if (empty($medium->group)) {
                 continue;
@@ -102,19 +112,20 @@ class ExtractImages extends Command
             $field['meta']['credit'] = empty($image->author) ? null : $image->author;
             $field['meta']['filename'] = sprintf('%s-%s.jpeg', Str::slug($filename), $image->id);
             $field['meta']['path'] = $path . $field['meta']['filename'];
+            $field['meta']['oUrl'] = preg_replace('/(crop.*\/photo)/', 'photo', $image->src);
             $field['meta']['dimension']['height'] = $img->height();
             $field['meta']['dimension']['width'] = $img->width();
             $field['meta']['size'] = $img->filesize();
             $field['creationDate'] = $created;
-            // if (!$image->status) {
-            //     $field['removedAt'] = Carbon::now();
-            // }
+            if (!$image->status) {
+                $field['removedAt'] = Carbon::now();
+            }
 
-            $imageModel = Galleries::withTrashed()->updateOrCreate(['oId' => $image->id], $field);
+            $imageModel = Galleries::withTrashed()->updateOrCreate(['type' => 'images', 'oId' => $image->id], $field);
             Storage::put($field['meta']['path'], $img->encode('jpeg'), 'public');
             Cache::forget('galleries:' . $imageModel->id);
             Cache::forget('galleries:images:all');
-            Cache::forever('galleries:' . $imageModel->id, $imageModel->load('media'));
+            // Cache::forever('galleries:' . $imageModel->id, $imageModel->load('media'));
             $this->line(is_null($imageModel) ? 'empty' : sprintf('Extracted %s', $imageModel->meta['caption']));
         }
 

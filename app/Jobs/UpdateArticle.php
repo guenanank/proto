@@ -9,25 +9,25 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 
-use App\Models\Elasticsearch\Articles;
+use App\Models\MongoDB\Groups;
 use App\Models\MongoDB\Posts;
+use App\Models\MongoDB\Galleries;
 
 class UpdateArticle implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    protected $article;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(Posts $article)
+    public function __construct()
     {
-        $this->article = $article;
+        //
     }
 
     /**
@@ -37,16 +37,43 @@ class UpdateArticle implements ShouldQueue
      */
     public function handle()
     {
-        $article = Articles::find($this->article->oId);
+        
+        $skip = Cache::get('upArticle', 0);
+        $interval = 10;
 
-        // update relates
-        // update read too
-        // update ?
-        $this->article->relates = null;
-        $this->article->save();
+        if ($skip >= Posts::articles()->count()) {
+            return Cache::forget('upArticle');
+        }
 
-        Cache::forget('posts:articles:' . $this->article->id);
-        Cache::forget('posts:articles:all');
-        Cache::forever('posts:articles:' . $this->article->id);
+        $articles = Posts::articles()->oldest('oId')->skip($skip)->take($interval)->get();
+
+
+        foreach ($articles as $article) {
+            $article->body->map(function ($paragraph) use($article) {
+                if (is_array($paragraph)) {
+
+
+                    $whereField = $paragraph['type'] == 'images' ? 'oUrl' : 'embed';
+                    // $gallery = Galleries::firstOrNew(['type' => $paragraph['type'], 'meta->' . $whereField => $paragraph['meta'][$whereField]], $paragraph);
+
+                    $paragraph = $gallery->toArray();
+                }
+            });
+
+            dd($article->body);
+            // update relates
+            // update read too
+            // update ?
+            // $this->article->relates = null;
+            // $this->article->save();
+            //
+            // Cache::forget('posts:articles:' . $this->article->id);
+            Cache::forget('posts:articles:all');
+            // Cache::forever('posts:articles:' . $this->article->id);
+        }
+
+        Cache::increment('upArticle', $interval);
+
+        dd('stop');
     }
 }

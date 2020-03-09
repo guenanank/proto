@@ -17,7 +17,7 @@ class Topics extends MongoDB
      * @var string
      */
     protected $primaryKey = 'oId';
-    
+
     /**
     * The attributes that are mass assignable.
     *
@@ -31,7 +31,7 @@ class Topics extends MongoDB
      * @var array
      */
     protected $casts = [
-        'meta' => 'collection'
+        // 'meta' => 'collection'
     ];
 
     /**

@@ -44,17 +44,17 @@
                         <strong class="text-lg">
                             <a href="{{ $medium->domain }}" target="_blank">{{ $medium->name }}</a>
                         </strong>
-                        <p>{{ $medium->meta->has('title') ? $medium->meta['title'] : null }}</p>
+                        <p>{{ isset($medium->meta['title']) ? $medium->meta['title'] : null }}</p>
                         <div class="small">
                             <a class="text-gray-500 delete" href="{{ route('media.destroy', ['id' => $medium->id]) }}"><i class="fas fa fa-trash"></i></a>
                             &nbsp;|&nbsp;
                             <a class="text-gray-600" href="{{ route('media.edit', ['id' => $medium->id]) }}"><i class="fas fa fa-pencil-alt"></i>&nbsp;Edit</a>
                         </div>
                     </td>
-                    <td>{{ $medium->meta['title'] }}</td>
-                    <td>{{ $medium->has('group') ? $medium->group->name : null }}</td>
-                    <td>{{ $medium->meta['description'] }}</td>
-                    <td>{{ $medium->analytics['gaId'] }}</td>
+                    <td>{{ isset($medium->meta['title']) ? $medium->meta['title'] : null }}</td>
+                    <td>{{ $medium->groupId }}</td>
+                    <td>{{ isset($medium->meta['description']) ? $medium->meta['description'] : null }}</td>
+                    <td>{{ isset($medium->analytics['gaId']) ? $medium->analytics['gaId'] : null }}</td>
                     <td>{{ $medium->lastUpdate }}</td>
                     <td>
                         <p>

@@ -25,8 +25,8 @@ class Channels extends MongoDB
      */
     protected $casts = [
         'isDisplayed' => 'boolean',
-        'analytics' => 'collection',
-        'meta' => 'collection',
+        // 'analytics' => 'collection',
+        // 'meta' => 'collection',
         'sort' => 'int'
     ];
 

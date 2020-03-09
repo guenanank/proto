@@ -19,7 +19,7 @@ class GalleriesController extends Controller
      */
     public function index($type)
     {
-        $galleries = Galleries::where('type', $type)->latest('creationDate')->simplePaginate(7);
+        $galleries = Galleries::ofType($type)->latest('creationDate')->simplePaginate(7);
         return view('galleries.' . $type . '.index', compact('galleries'));
     }
 

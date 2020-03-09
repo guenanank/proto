@@ -29,7 +29,7 @@ class ExtractSections extends Command
     protected $description = 'Get old data sections';
 
     private $client;
-    private $uri = 'https://api.gridtechno.com/site/old';
+    private $uri = 'https://api.gridtechno.com/extract/';
     private $headers = [
       'Content-Type' => 'application/json',
       'Api-Token' => '$2y$10$c1V7USh1HZSr9irAuwVcpOIRoYWhE4PCPI9jh31y4KXnoq4B3DA9C'
@@ -43,7 +43,7 @@ class ExtractSections extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->client = new Client;
+        $this->client = new Client(['headers' => $this->headers]);
     }
 
     /**
@@ -57,21 +57,21 @@ class ExtractSections extends Command
         // return;
         $skip = Cache::get('inChannel', 0);
         $interval = 100;
-        $total = $this->client->get($this->uri, [
-          'headers' => $this->headers,
-          'query' => ['table' => 'section', 'type' => 'count']
+        $total = $this->client->get($this->uri . 'count', [
+          'query' => ['table' => 'section']
         ])->getBody();
 
-        $media = Media::withTrashed()->with('group')->latest('lastUpdate')->get();
+        $media = Cache::rememberForever('media:all', function() {
+            return Media::withTrashed()->with('group')->get();
+        });
 
         if ($skip >= (int) $total->getContents()) {
             Cache::forget('inChannel');
             return;
         }
 
-        $client = $this->client->get($this->uri, [
-          'headers' => $this->headers,
-          'query' => ['table' => 'section', 'skip' => $skip, 'take' => $interval, 'order' => 'created_date']
+        $client = $this->client->get($this->uri . 'sections', [
+          'query' => ['skip' => $skip, 'take' => $interval, 'order' => 'created_date']
         ])->getBody();
 
         foreach(json_decode($client->getContents()) as $section) {
@@ -104,7 +104,7 @@ class ExtractSections extends Command
 
             Cache::forget('channels:' . $channel->id);
             Cache::forget('channels:all');
-            Cache::forever('channels:' . $channel->id, $channel->load('media'));
+            // Cache::forever('channels:' . $channel->id, $channel->load('media'));
             $this->line(is_null($channel) ? 'empty' : sprintf('Extracted %s', $channel->name));
         }
 

@@ -22,8 +22,8 @@ class Groups extends MongoDB
      * @var array
      */
     protected $casts = [
-        'analytics' => 'collection',
-        'meta' => 'collection'
+        // 'analytics' => 'json',
+        // 'meta' => 'json'
     ];
 
     /**

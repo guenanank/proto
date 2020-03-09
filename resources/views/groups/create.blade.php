@@ -22,9 +22,9 @@
                 <small id="nameHelp" class="form-text text-danger"></small>
             </div>
             <div class="form-group">
-                <label for="analyticsGaId">Analytics</label>
-                <input name="analytics[gaId]" type="text" class="form-control" id="analyticsGaId" aria-describedby="analyticsGaIdHelp" placeholder="Enter group google analytics property id">
-                <small id="analyticsGaIdHelp" class="form-text text-danger"></small>
+                <label for="analyticsPropertyId">Analytics</label>
+                <input name="analytics[propertyId]" type="text" class="form-control" id="analyticsPropertyId" aria-describedby="analyticsPropertyIdHelp" placeholder="Enter group google analytics property id">
+                <small id="analyticsPropertyIdHelp" class="form-text text-danger"></small>
             </div>
             <div class="clearfix">&nbsp;</div>
             <div class="container">

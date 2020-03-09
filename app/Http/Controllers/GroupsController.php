@@ -48,7 +48,7 @@ class GroupsController extends Controller
         $request->validate(Groups::rules()->toArray());
         $create = Groups::create($request->all());
         Cache::forget('groups:all');
-        Cache::forever('groups:' . $create->_id, $create);
+        Cache::forever('groups:' . $create->id, $create);
         return response()->json($create);
     }
 
@@ -75,14 +75,14 @@ class GroupsController extends Controller
         Validator::make($request->all(), $group->rules([
           'code' => [
               'present', 'alpha_num', 'max:15',
-              Rule::unique($group->getTable())->ignore($group->_id),
+              Rule::unique($group->getTable())->ignore($group->id),
           ]
         ])->toArray());
 
         $update = $group->update($request->all());
-        Cache::forget('groups:' . $group->_id);
+        Cache::forget('groups:' . $group->id);
         Cache::forget('groups:all');
-        Cache::forever('groups:' . $group->_id, $group);
+        Cache::forever('groups:' . $group->id, $group);
         return response()->json($update);
     }
 
@@ -95,7 +95,7 @@ class GroupsController extends Controller
     public function destroy(Groups $group)
     {
         Cache::forget('groups:all');
-        Cache::forget('groups:' . $group->_id);
+        Cache::forget('groups:' . $group->id);
         $delete = $group->delete();
         return response()->json($delete);
     }

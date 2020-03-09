@@ -22,10 +22,10 @@ class Media extends MongoDB
      * @var array
      */
     protected $casts = [
-        'analytics' => 'collection',
-        'meta' => 'collection',
-        'assets' => 'collection',
-        'masthead' => 'collection'
+    //     'analytics' => 'json',
+    //     'meta' => 'json',
+    //     'assets' => 'json',
+    //     'masthead' => 'json'
     ];
 
     /**

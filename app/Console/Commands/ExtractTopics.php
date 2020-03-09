@@ -31,7 +31,7 @@ class ExtractTopics extends Command
     protected $description = 'Get old data topics';
 
     private $client;
-    private $uri = 'https://api.gridtechno.com/site/old';
+    private $uri = 'https://api.gridtechno.com/extract/';
     private $headers = [
       'Content-Type' => 'application/json',
       'Api-Token' => '$2y$10$c1V7USh1HZSr9irAuwVcpOIRoYWhE4PCPI9jh31y4KXnoq4B3DA9C'
@@ -45,7 +45,7 @@ class ExtractTopics extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->client = new Client;
+        $this->client = new Client(['headers' => $this->headers]);
     }
 
     /**
@@ -59,21 +59,21 @@ class ExtractTopics extends Command
         // return;
         $skip = Cache::get('inTopic', 0);
         $interval = 100;
-        $total = $this->client->get($this->uri, [
-          'headers' => $this->headers,
-          'query' => ['table' => 'topic', 'type' => 'count']
+        $total = $this->client->get($this->uri . 'count', [
+          'query' => ['table' => 'topic']
         ])->getBody();
 
-        $media = Media::withTrashed()->with('group')->latest('lastUpdate')->get();
+        $media = Cache::rememberForever('media:all', function() {
+            return Media::withTrashed()->with('group')->get();
+        });
 
         if ($skip >= (int) $total->getContents()) {
             Cache::forget('inTopic');
             return;
         }
 
-        $client = $this->client->get($this->uri, [
-          'headers' => $this->headers,
-          'query' => ['table' => 'topic', 'skip' => $skip, 'take' => $interval, 'order' => 'created_date']
+        $client = $this->client->get($this->uri . 'topics', [
+          'query' => ['skip' => $skip, 'take' => $interval, 'order' => 'created_date']
         ])->getBody();
 
         foreach(json_decode($client->getContents()) as $topic) {
@@ -94,7 +94,7 @@ class ExtractTopics extends Command
                 $field['removedAt'] = Carbon::parse($topic->modified_date);
             }
 
-            if(!empty($topic->photo_url)) {
+            if(!empty($topic->photo_url)  && filter_var($topic->photo_url, FILTER_VALIDATE_URL)) {
                 $path = sprintf('%s/%s/topics/', Str::slug($medium->group->name), Str::slug($medium->name));
                 $filename = sprintf('%s-%s.jpeg', Str::slug($topic->name), $topic->id);
                 $field['meta']['cover'] = $filename;
@@ -111,7 +111,7 @@ class ExtractTopics extends Command
 
             Cache::forget('topics:' . $topicModel->id);
             Cache::forget('topics:all');
-            Cache::forever('topics:' . $topicModel->id, $topicModel->load('media'));
+            // Cache::forever('topics:' . $topicModel->id, $topicModel->load('media'));
             $this->line(is_null($topicModel) ? 'empty' : sprintf('Extracted %s', $topicModel->title));
 
         }

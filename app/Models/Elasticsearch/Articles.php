@@ -96,10 +96,6 @@ class Articles extends Model
             }
         }, $value);
 
-        // extract read too
-        // preg_match('/<strong>Baca Juga: .*?<\/strong>/i', $value, $readToo);
-        // dd($readToo);
-
         // explode to collection
         $value = collect(explode('</p>', $value))->transform(function ($paragraph) {
             $paragraph = trim(preg_replace('#<p(.*?)>#is', null, $paragraph));
@@ -108,7 +104,12 @@ class Articles extends Model
                 $i = (int) Str::before(Str::after($paragraph, '<!--img'), '-->');
                 $paragraph = null;
                 if(count($this->attributes['photo']) > 0) {
-                    $paragraph = $this->attributes['photo'][$i > 0 ? $i - 1 : $i];
+                    $photos = $this->attributes['photo'][$i > 0 ? $i - 1 : $i];
+                    dd($photos);
+                    $src = explode('/', $photos['src']);
+                    $id = Str::before(end($src), '.');
+                    $p = Galleries::images()->where('oId', (int) $id)->first();
+                    dd($p);
                 }
             } elseif (preg_match('/<!--iframe(.*?)-->/', $paragraph, $keys)) {
                 $i = (int) Str::before(Str::after($paragraph, '<!--iframe'), '-->');
@@ -118,9 +119,9 @@ class Articles extends Model
             return $paragraph;
         })->reject(function($paragraph) {
             return $paragraph == '&nbsp;';
-        })->filter()->toJson();
+        })->filter();
 
-        // dd($value);
+        dd($value);
         return $value;
     }
 
@@ -179,6 +180,6 @@ class Articles extends Model
     {
         $publishedBy = $this->attributes['published_by'];
         $editor = User::where('oId', $publishedBy['id'])->first();
-        return $editor ? $editor : null;
+        return $editor ? $editor->id : null;
     }
 }

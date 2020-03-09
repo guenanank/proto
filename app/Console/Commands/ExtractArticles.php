@@ -6,14 +6,16 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Client;
+use Intervention\Image\ImageManagerStatic as Image;
 
 use App\Models\Elasticsearch\Articles;
 use App\User;
 use App\Models\MongoDB\Media;
 use App\Models\MongoDB\Channels;
+use App\Models\MongoDB\Galleries;
 use App\Models\MongoDB\Posts;
-
-use App\Jobs\UpdateArticle;
 
 class ExtractArticles extends Command
 {
@@ -31,6 +33,13 @@ class ExtractArticles extends Command
      */
     protected $description = 'Get old data articles';
 
+    private $client;
+    private $uri = 'https://api.gridtechno.com/extract/';
+    private $headers = [
+      'Content-Type' => 'application/json',
+      'Api-Token' => '$2y$10$c1V7USh1HZSr9irAuwVcpOIRoYWhE4PCPI9jh31y4KXnoq4B3DA9C'
+    ];
+
     /**
      * Create a new command instance.
      *
@@ -39,6 +48,7 @@ class ExtractArticles extends Command
     public function __construct()
     {
         parent::__construct();
+        $this->client = new Client(['headers' => $this->headers]);
     }
 
     /**
@@ -48,79 +58,199 @@ class ExtractArticles extends Command
      */
     public function handle()
     {
-        // Cache::forget('inArticle');
-        // return;
-
+        // return Cache::forget('inArticle');
         $skip = Cache::get('inArticle', 0);
-        $interval = 100;
+        $interval = 10;
 
-        $media = Cache::rememberForever('mediaWithTrashed', function () {
-            return Media::withTrashed()->pluck('_id', 'oId')->all();
+        $media = Cache::rememberForever('media:withTrashed', function() {
+            return Media::withTrashed()->with('group')->get();
         });
 
         $channels = Cache::rememberForever('channelsAll', function () {
             return Channels::pluck('_id', 'oId')->all();
         });
 
-        $users = Cache::rememberForever('usersAll', function () {
+        $users = Cache::rememberForever('users:all', function () {
             return User::all();
         });
 
-        if ($skip >= Articles::count()) {
-            Cache::forget('inArticle');
-            return;
+        $total = $this->client->get($this->uri . 'count', [
+          'query' => [
+            'table' => 'article',
+            'where' => true,
+            'field' => 'created_date',
+            'operand' => '>=',
+            'param' => '0000-00-00 00:00:00'
+          ]
+        ])->getBody();
+
+        if ($skip >= (int) $total->getContents()) {
+            return Cache::forget('inArticle');
         }
 
-        $articles = Articles::orderBy('id', 'asc')->skip($skip)->take($interval)->get();
-        foreach ($articles as $article) {
+        $client = $this->client->get($this->uri . 'articles', [
+          'query' => [
+            'field' => 'created_date',
+            'operand' => '>=',
+            'param' => '0000-00-00 00:00:00',
+            'skip' => $skip,
+            'take' => $interval,
+            'order' => 'created_date'
+          ]
+        ])->getBody();
 
-            if (is_null($article->section)) {
+        foreach (json_decode($client->getContents()) as $article) {
+            $medium = $media->where('oId', $article->site->id == 0 ? rand(1, $media->count()) : $article->site->id)->first();
+            if (empty($medium->group)) {
                 continue;
             }
 
-            $medium = $media[$article->site['id']];
-            $channel = $channels[$article->section['id']];
-            $reporters = $users->whereInStrict('oId', array_column($article->author, 'id'));
+            if(is_null($article->section)) {
+                continue;
+            }
 
-            if (is_null($medium) || is_null($channel) || is_null($reporters)) {
+            $channel = $channels[$article->section->id];
+
+            if (is_null($medium) || is_null($channel) || is_null($article->authors) || is_null($article->editor)) {
                 continue;
             }
 
             $data = [
-              'mediaId' => $medium,
+              'mediaId' => $medium->id,
               'channelId' => $channel,
-              'type' => 'articles',
               'headlines' => [
                 'title' => $article->title,
                 'subtitle' => null,
                 'description' => $article->description,
-                'tag' => $article->tag
+                'tag' => collect($article->tags)->pluck('name')->toArray()
               ],
               'editorials' => [
                 'welcomePage' => $article->allow_wp,
-                'headline' => false,
-                'choice' => false,
-                'advertorial' => (bool) $article->section['name'] == 'Advertorial',
-                'source' => $article->source
+                'headline' => !is_null($article->headline),
+                'choice' => !is_null($article->choice),
+                'advertorial' => (bool) $article->section->name === 'Advertorial',
+                'source' => collect($article->sources)->map(function ($source) {
+                    return [
+                      'url' => $source->website,
+                      'name' => $source->name
+                    ];
+                })->toArray()
               ],
               'published' => $article->published_date,
-              'body' => $article->content,
-              'assets' => [
-                'photo' => $article->photo,
-                'iframe' => $article->iframe
-              ],
-              'reporter' => $reporters,
-              'editor' => $article->editor,
+              'body' => $this->getContentAttribute($article, $medium),
+              'reporter' => collect($article->authors)->pluck('id')->toArray(),
+              'editor' => $article->editor->id,
+              'relates' => collect($article->relates)->pluck('id')->toArray(),
               'commentable' => $article->allow_comment,
-              'creationDate' => $article->published_date
+              'topics' => collect($article->topics)->pluck('id')->toArray(),
+              'creationDate' => $article->created_date,
             ];
 
-            // dd($data);
-            $articleModel = Posts::updateOrCreate(['oId' => $article->id], $data);
+            if ($article->basket_id == 4) {
+                $data['removedAt'] = Carbon::now()->toDateTimeString();
+            }
+
+            $articleModel = Posts::updateOrCreate(['type' => 'articles', 'oId' => $article->id], $data);
             // UpdateArticle::dispatch($create)->delay(now()->addMinutes(10));
             $this->line(is_null($articleModel) ? 'empty' : sprintf('Extracted %s', $articleModel->headlines['title']));
         }
 
         Cache::increment('inArticle', $interval);
+    }
+
+    private function getContentAttribute($article, $medium)
+    {
+        $dom = new \DOMDocument;
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($article->content);
+        libxml_use_internal_errors(false);
+        foreach ($dom->getElementsByTagName('blockquote') as $blockqoute) {
+            $class = $blockqoute->getAttribute('class');
+            if ($class == 'instagram-media') {
+                $instagramPermalink = $blockqoute->getAttribute('data-instgrm-permalink');
+                $instagram = $dom->createElement('p', Str::before($instagramPermalink, '?'));
+                $blockqoute->parentNode->replaceChild($instagram, $blockqoute);
+            } elseif ($class == 'twitter-tweet') {
+                $link = $blockqoute->getElementsByTagName('a')->item(0);
+                $twitter = $dom->createElement('p', $link->getAttribute('src'));
+                $blockqoute->parentNode->replaceChild($twitter, $blockqoute);
+            }
+        }
+
+        preg_match("/<body[^>]*>(.*?)<\/body>/is", $dom->saveHTML(), $body);
+        $value = $body[1];
+
+        // explode to collection
+        $value = collect(explode('</p>', $value))->transform(function ($paragraph) use ($medium, $article) {
+
+            // remove enclosed paragraph tag
+            $paragraph = trim(preg_replace('#<p(.*?)>#is', '', $paragraph));
+
+            //remove hr
+            $paragraph = trim(str_replace(['<hr>', '<hr />'], '', $paragraph));
+
+            // remove \n (newlines)
+            $paragraph = trim(str_replace("\r\n", '', $paragraph));
+
+            // replace image
+            if (preg_match('/<img[^>]* src=\"([^\"]*)\"[^>]*>/', $paragraph, $match)) {
+                $domImg = new \DOMDocument();
+                $domImg->loadHTML($match[0]);
+                $img = $domImg->getElementsByTagName('img')->item(0);
+                $src = preg_replace('/(crop.*\/photo)/', 'photo', $img->getAttribute('src'));
+                $image = @getimagesize($src);
+
+                $data = [
+                  'meta' => [
+                    'caption' => $img->getAttribute('data-caption'),
+                    'source' => $img->getAttribute('data-source'),
+                    'credit' => $img->getAttribute('data-author'),
+                    'filename' => null,
+                    'path' => null,
+                    'oUrl' => $src,
+                    'dimension' => [
+                      'height' => $image[0],
+                      'width' => $image[1]
+                    ],
+                    'size' => null,
+                    'creationDate' => $article->created_date
+                  ]
+                ];
+
+                $paragraph = Galleries::firstOrNew(['mediaId' => $medium->id, 'type' => 'images', 'meta.oUrl' => $src], $data)->toArray();
+            }
+
+            // replace iframe
+            elseif (preg_match('/<iframe.*src=\"(.*)\".*><\/iframe>/isU', $paragraph, $match)) {
+                $dom = new \DOMDocument();
+                $dom->loadHTML($match[0]);
+                $iframe = $dom->getElementsByTagName('iframe')->item(0);
+                $src = $iframe->getAttribute('src');
+
+                $data = [
+                  'meta' => [
+                    'title' => $iframe->getAttribute('data-title'),
+                    'description' => $iframe->getAttribute('data-description'),
+                    'youtubeId' => Str::after('https://www.youtube.com/embed/', $src),
+                    'cover' => [
+                      'name' => null,
+                      'path' => null,
+                    ],
+                    'embed' => $src,
+                    'published' => $article->created_date,
+                    'statistics' => [],
+                    'creationDate' => $article->created_date
+                  ]
+                ];
+
+                $paragraph = Galleries::firstOrNew(['mediaId' => $medium->id, 'type' => 'videos', 'meta.embed' => $src], $data)->toArray();
+            }
+
+            return $paragraph;
+        })->reject(function ($paragraph) {
+            return $paragraph == '&nbsp;';
+        })->filter()->all();
+
+        return $value;
     }
 }

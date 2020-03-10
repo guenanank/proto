@@ -73,8 +73,8 @@
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Your work has been deleted',
-                                showConfirmButton: false,
-                                timer: 1750
+                                // showConfirmButton: false,
+                                // timer: 1750
                             }).then(function() {
                                 location.reload(true);
                             });
@@ -84,8 +84,8 @@
                     Swal.fire({
                         title: 'Your data is safe :)',
                         icon: 'error',
-                        showConfirmButton: false,
-                        timer: 1750
+                        // showConfirmButton: false,
+                        // timer: 1750
                     }).then(function() {
                         location.reload(true);
                     });

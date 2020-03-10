@@ -5,12 +5,11 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client;
 use Intervention\Image\ImageManagerStatic as Image;
+use Illuminate\Support\Facades\Cache;
 
-use App\Models\Elasticsearch\Articles;
 use App\User;
 use App\Models\MongoDB\Media;
 use App\Models\MongoDB\Channels;
@@ -62,15 +61,15 @@ class ExtractArticles extends Command
         $skip = Cache::get('inArticle', 0);
         $interval = 10;
 
-        $media = Cache::rememberForever('media:withTrashed', function() {
+        $media = Cache::get('media:withTrashed', function() {
             return Media::withTrashed()->with('group')->get();
         });
 
-        $channels = Cache::rememberForever('channelsAll', function () {
-            return Channels::pluck('_id', 'oId')->all();
+        $channels = Cache::get('channelsAll', function () {
+            return Channels::withTrashed()->pluck('_id', 'oId')->all();
         });
 
-        $users = Cache::rememberForever('users:all', function () {
+        $users = Cache::get('users:all', function () {
             return User::all();
         });
 
@@ -105,13 +104,13 @@ class ExtractArticles extends Command
                 continue;
             }
 
-            if(is_null($article->section)) {
+            if(empty($channels[$article->section->id])) {
                 continue;
             }
 
             $channel = $channels[$article->section->id];
 
-            if (is_null($medium) || is_null($channel) || is_null($article->authors) || is_null($article->editor)) {
+            if (is_null($medium) || is_null($article->authors) || is_null($article->editor)) {
                 continue;
             }
 

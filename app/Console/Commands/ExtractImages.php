@@ -68,13 +68,12 @@ class ExtractImages extends Command
           ]
         ])->getBody();
 
-        $media = Cache::rememberForever('media:all', function() {
+        $media = Cache::get('media:withTrashed', function() {
             return Media::withTrashed()->with('group')->get();
         });
 
         if ($skip >= (int) $total->getContents()) {
-            Cache::forget('inImage');
-            return;
+            return Cache::forget('inImage');
         }
 
         $client = $this->client->get($this->uri . 'images', [
@@ -104,7 +103,8 @@ class ExtractImages extends Command
                   : Image::canvas(800, 600)->text($image->caption, 120, 100);
             }
 
-            $path = sprintf('%s/%s/images/%04d/%02d/%02d/', Str::slug($medium->group->name), Str::slug($medium->name), $created->year, $created->month, $created->day);
+            $aliasSubdomain = Str::after(Str::before($medium->domain, '.'), 'https://');
+            $path = sprintf('%s/%s/images/%04d/%02d/%02d/', strtolower($medium->group->code), $aliasSubdomain, $created->year, $created->month, $created->day);
             $filename = empty($image->caption) ? $medium->name : $image->caption;
             $field['mediaId'] = $medium->id;
             $field['meta']['caption'] = $image->caption;

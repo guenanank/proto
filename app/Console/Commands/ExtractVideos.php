@@ -55,10 +55,9 @@ class ExtractVideos extends Command
      */
     public function handle()
     {
-        // Cache::forget('inVideo');
-        // return;
+        // return Cache::forget('inVideo');
         $skip = Cache::get('inVideo', 0);
-        $interval = 100;
+        $interval = 200;
         $total = $this->client->get($this->uri . 'count', [
           'query' => [
             'table' => 'video',
@@ -69,13 +68,12 @@ class ExtractVideos extends Command
           ]
         ])->getBody();
 
-        $media = Cache::rememberForever('media:all', function() {
+        $media = Cache::get('media:withTrashed', function() {
             return Media::withTrashed()->with('group')->get();
         });
 
         if ($skip >= (int) $total->getContents()) {
-            Cache::forget('inVideo');
-            return;
+            return Cache::forget('inVideo');
         }
 
         $client = $this->client->get($this->uri . 'videos', [
@@ -106,7 +104,8 @@ class ExtractVideos extends Command
                   : Image::canvas(800, 600)->text($video->title, 120, 100);
             }
 
-            $path = sprintf('%s/%s/videos/%04d/%02d/%02d/', Str::slug($medium->group->name), Str::slug($medium->name), $created->year, $created->month, $created->day);
+            $aliasSubdomain = Str::after(Str::before($medium->domain, '.'), 'https://');
+            $path = sprintf('%s/%s/videos/%04d/%02d/%02d/', strtolower($medium->group->code), $aliasSubdomain, $created->year, $created->month, $created->day);
             $field['mediaId'] = $medium->id;
             $field['meta']['title'] = $video->title;
             $field['meta']['description'] = $video->description;

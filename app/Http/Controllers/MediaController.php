@@ -20,6 +20,7 @@ class MediaController extends Controller
      */
     public function index()
     {
+        // Cache::forget('media:all');
         $media = Cache::rememberForever('media:all', function () {
             return Media::with('group')->latest('lastUpdate')->get();
         });
@@ -181,25 +182,25 @@ class MediaController extends Controller
     {
         $medium->load('group');
         if ($medium->has('group') || $medium->group->isNotEmpty()) {
-            $path = sprintf('%s/%s/media/', Str::slug($group->name), Str::slug($medium->name));
+            $path = sprintf('%s/%s/media/', Str::slug($medium->group->name), Str::slug($medium->name));
 
-            if ($medium->assets->has('logo') && Storage::exists($path . $medium->assets['logo'])) {
+            if (isset($medium->assets['logo']) && Storage::exists($path . $medium->assets['logo'])) {
                 Storage::delete($path . $medium->assets['logo']);
             }
 
-            if ($medium->assets->has('logoAlt') && Storage::exists($path . $medium->assets['logoAlt'])) {
+            if (isset($medium->assets['logoAlt']) && Storage::exists($path . $medium->assets['logoAlt'])) {
                 Storage::delete($path . $medium->assets['logoAlt']);
             }
 
-            if ($medium->assets->has('icon') && Storage::exists($path . $medium->assets['icon'])) {
+            if (isset($medium->assets['icon']) && Storage::exists($path . $medium->assets['icon'])) {
                 Storage::delete($path . $medium->assets['icon']);
             }
 
-            if ($medium->assets->has('css') && Storage::exists($path . $medium->assets['css'])) {
+            if (isset($medium->assets['css']) && Storage::exists($path . $medium->assets['css'])) {
                 Storage::delete($path . $medium->assets['css']);
             }
 
-            if ($medium->assets->has('js') && Storage::exists($path . $medium->assets['js'])) {
+            if (isset($medium->assets['js']) && Storage::exists($path . $medium->assets['js'])) {
                 Storage::delete($path . $medium->assets['js']);
             }
         }

@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        // Commands\ExtractImages::class
+        'App\Console\Commands\ExtractArticles',
     ];
 
     /**
@@ -34,8 +34,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('extract:podcast')->everyMinute()->between('2:00', '3:00')->runInBackground();
         $schedule->command('extract:music')->everyMinute()->between('3:00', '4:00')->runInBackground();
         $schedule->command('extract:video')->everyFifteenMinutes()->between('6:00', '17:00')->runInBackground();
-        $schedule->command('extract:image')->everyFiveMinutes()->withoutOverlapping(5);
-        $schedule->command('extract:article')->everyMinute()->withoutOverlapping(5);
+        $schedule->command('extract:image')->everyMinute()->withoutOverlapping(5)->runInBackground();
+        $schedule->command('extract:article')->everyMinute();
     }
 
     /**

@@ -56,21 +56,15 @@ class ExtractUsers extends Command
      */
     public function handle()
     {
-        // Cache::forget('inUser');
-        // return;
+        // return Cache::forget('inUser');
         $skip = Cache::get('inUser', 0);
-        $interval = 100;
+        $interval = 200;
         $total = $this->client->get($this->uri . 'count', [
           'query' => ['table' => 'user']
         ])->getBody();
 
-        $media = Cache::rememberForever('media:all', function() {
-            return Media::withTrashed()->with('group')->get();
-        });
-
         if ($skip >= (int) $total->getContents()) {
-            Cache::forget('inUser');
-            return;
+            return Cache::forget('inUser');
         }
 
         $client = $this->client->get($this->uri . 'users', [

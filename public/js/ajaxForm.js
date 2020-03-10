@@ -167,9 +167,9 @@
             success: function success() {
               Swal.fire({
                 icon: 'success',
-                title: 'Your work has been deleted',
-                showConfirmButton: false,
-                timer: 1750
+                title: 'Your work has been deleted' // showConfirmButton: false,
+                // timer: 1750
+
               }).then(function () {
                 location.reload(true);
               });
@@ -178,9 +178,9 @@
         } else if (result.dismiss === swal.DismissReason.cancel) {
           Swal.fire({
             title: 'Your data is safe :)',
-            icon: 'error',
-            showConfirmButton: false,
-            timer: 1750
+            icon: 'error' // showConfirmButton: false,
+            // timer: 1750
+
           }).then(function () {
             location.reload(true);
           });

@@ -55,21 +55,19 @@ class ExtractTopics extends Command
      */
     public function handle()
     {
-        // Cache::forget('inTopic');
-        // return;
+        // return Cache::forget('inTopic');
         $skip = Cache::get('inTopic', 0);
-        $interval = 100;
+        $interval = 200;
         $total = $this->client->get($this->uri . 'count', [
           'query' => ['table' => 'topic']
         ])->getBody();
 
-        $media = Cache::rememberForever('media:all', function() {
+        $media = Cache::get('media:withTrashed', function() {
             return Media::withTrashed()->with('group')->get();
         });
 
         if ($skip >= (int) $total->getContents()) {
-            Cache::forget('inTopic');
-            return;
+            return Cache::forget('inTopic');
         }
 
         $client = $this->client->get($this->uri . 'topics', [
@@ -95,7 +93,8 @@ class ExtractTopics extends Command
             }
 
             if(!empty($topic->photo_url)  && filter_var($topic->photo_url, FILTER_VALIDATE_URL)) {
-                $path = sprintf('%s/%s/topics/', Str::slug($medium->group->name), Str::slug($medium->name));
+                $aliasSubdomain = Str::after(Str::before($medium->domain, '.'), 'https://');
+                $path = sprintf('%s/%s/topics/', strtolower($medium->group->code), $aliasSubdomain);
                 $filename = sprintf('%s-%s.jpeg', Str::slug($topic->name), $topic->id);
                 $field['meta']['cover'] = $filename;
 

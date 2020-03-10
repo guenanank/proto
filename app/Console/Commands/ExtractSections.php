@@ -53,21 +53,19 @@ class ExtractSections extends Command
      */
     public function handle()
     {
-        // Cache::forget('inChannel');
-        // return;
+        // return Cache::forget('inChannel');
         $skip = Cache::get('inChannel', 0);
-        $interval = 100;
+        $interval = 200;
         $total = $this->client->get($this->uri . 'count', [
           'query' => ['table' => 'section']
         ])->getBody();
 
-        $media = Cache::rememberForever('media:all', function() {
+        $media = Cache::get('media:withTrashed', function() {
             return Media::withTrashed()->with('group')->get();
         });
 
         if ($skip >= (int) $total->getContents()) {
-            Cache::forget('inChannel');
-            return;
+            return Cache::forget('inChannel');
         }
 
         $client = $this->client->get($this->uri . 'sections', [

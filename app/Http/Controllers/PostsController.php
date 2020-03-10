@@ -26,12 +26,11 @@ class PostsController extends Controller
      */
     public function dataTable(Request $request)
     {
-        // $posts = Cache::rememberForever('posts:' . strtolower($request->type) . ':all', function () use($request) {
-        //     return Posts::where('type', $request->type)->latest('lastUpdate')->get();
-        // });
+        $posts = Cache::rememberForever('posts:' . strtolower($request->type) . ':all', function () use($request) {
+            return Posts::where('type', $request->type)->latest('lastUpdate')->get();
+        });
 
-        dd(Posts::dataTable());
-        return datatables(Posts::ofType($request->type)->get());
+        return datatables($posts);
     }
 
     /**

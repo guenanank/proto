@@ -54,10 +54,9 @@ class ExtractPodcasts extends Command
      */
     public function handle()
     {
-        // Cache::forget('inPodcast');
-        // return;
+        // return Cache::forget('inPodcast');
         $skip = Cache::get('inPodcast', 0);
-        $interval = 100;
+        $interval = 200;
         $total = $this->client->get($this->uri . 'count', [
           'query' => [
             'table' => 'podcast',
@@ -68,13 +67,12 @@ class ExtractPodcasts extends Command
           ]
         ])->getBody();
 
-        $media = Cache::rememberForever('media:all', function() {
+        $media = Cache::get('media:withTrashed', function() {
             return Media::withTrashed()->with('group')->get();
         });
 
         if ($skip >= (int) $total->getContents()) {
-            Cache::forget('inPodcast');
-            return;
+            return Cache::forget('inPodcast');
         }
 
         $client = $this->client->get($this->uri . 'podcasts', [

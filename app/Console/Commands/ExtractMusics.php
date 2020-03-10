@@ -54,10 +54,9 @@ class ExtractMusics extends Command
      */
     public function handle()
     {
-        // Cache::forget('inMusic');
-        // return;
+        // return Cache::forget('inMusic');
         $skip = Cache::get('inMusic', 0);
-        $interval = 100;
+        $interval = 200;
         $total = $this->client->get($this->uri . 'count', [
           'query' => [
             'table' => 'music',
@@ -68,13 +67,12 @@ class ExtractMusics extends Command
           ]
         ])->getBody();
 
-        $media = Cache::rememberForever('media:all', function() {
+        $media = Cache::get('media:withTrashed', function() {
             return Media::withTrashed()->with('group')->get();
         });
 
         if ($skip >= (int) $total->getContents()) {
-            Cache::forget('inMusic');
-            return;
+            return Cache::forget('inMusic');
         }
 
         $client = $this->client->get($this->uri . 'musics', [

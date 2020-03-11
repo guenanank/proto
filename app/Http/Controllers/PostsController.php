@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Pimlie\DataTables\MongodbDataTable;
 
 use App\Models\MongoDB\Posts;
 
@@ -16,6 +17,7 @@ class PostsController extends Controller
      */
     public function index($type)
     {
+        // dd(Posts::ofType($type)->first());
         return view('posts.' . $type . '.index');
     }
 
@@ -26,11 +28,11 @@ class PostsController extends Controller
      */
     public function dataTable(Request $request)
     {
-        $posts = Cache::rememberForever('posts:' . strtolower($request->type) . ':all', function () use($request) {
-            return Posts::where('type', $request->type)->latest('lastUpdate')->get();
-        });
+        // $posts = Cache::rememberForever('posts:' . strtolower($request->type) . ':all', function () use($request) {
+        //     return Posts::where('type', $request->type)->latest('lastUpdate')->get();
+        // });
 
-        return datatables($posts);
+        return (new MongodbDataTable(Posts::ofType($request->type)))->toJson();
     }
 
     /**

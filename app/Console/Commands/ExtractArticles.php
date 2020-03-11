@@ -58,10 +58,11 @@ class ExtractArticles extends Command
     public function handle()
     {
         // return Cache::forget('inArticle');
-        $skip = Cache::get('inArticle', 0);
-        $interval = 10;
+        $start = microtime(true);
+        $skip = Cache::get('inArticle', rand(1, 100));
+        $interval = 1000;
 
-        $media = Cache::get('media:withTrashed', function() {
+        $media = Cache::get('media:withTrashed', function () {
             return Media::withTrashed()->with('group')->get();
         });
 
@@ -99,12 +100,12 @@ class ExtractArticles extends Command
         ])->getBody();
 
         foreach (json_decode($client->getContents()) as $article) {
-            $medium = $media->where('oId', $article->site->id == 0 ? rand(1, $media->count()) : $article->site->id)->first();
+            $medium = $media->where('oId', $article->site->id)->first();
             if (empty($medium->group)) {
                 continue;
             }
 
-            if(empty($channels[$article->section->id])) {
+            if (empty($article->section->id)) {
                 continue;
             }
 
@@ -115,8 +116,10 @@ class ExtractArticles extends Command
             }
 
             $data = [
+              'type' => 'articles',
               'mediaId' => $medium->id,
               'channelId' => $channel,
+              'oId' => $article->id,
               'headlines' => [
                 'title' => $article->title,
                 'subtitle' => null,
@@ -149,11 +152,13 @@ class ExtractArticles extends Command
                 $data['removedAt'] = Carbon::now()->toDateTimeString();
             }
 
-            $articleModel = Posts::updateOrCreate(['type' => 'articles', 'oId' => $article->id], $data);
+            // dump($data);
+            $articleModel = Posts::create($data);
             // UpdateArticle::dispatch($create)->delay(now()->addMinutes(10));
-            $this->line(is_null($articleModel) ? 'empty' : sprintf('Extracted %s', $articleModel->headlines['title']));
+            // $this->info(is_null($articleModel) ? 'empty' : sprintf('Extracted %s', $articleModel->headlines['title']));
         }
 
+        $this->info(microtime(true) - $start);
         Cache::increment('inArticle', $interval);
     }
 
@@ -163,16 +168,38 @@ class ExtractArticles extends Command
         libxml_use_internal_errors(true);
         $dom->loadHTML($article->content);
         libxml_use_internal_errors(false);
-        foreach ($dom->getElementsByTagName('blockquote') as $blockqoute) {
-            $class = $blockqoute->getAttribute('class');
-            if ($class == 'instagram-media') {
-                $instagramPermalink = $blockqoute->getAttribute('data-instgrm-permalink');
-                $instagram = $dom->createElement('p', Str::before($instagramPermalink, '?'));
-                $blockqoute->parentNode->replaceChild($instagram, $blockqoute);
-            } elseif ($class == 'twitter-tweet') {
-                $link = $blockqoute->getElementsByTagName('a')->item(0);
-                $twitter = $dom->createElement('p', $link->getAttribute('src'));
-                $blockqoute->parentNode->replaceChild($twitter, $blockqoute);
+        // $dom->preserveWhiteSpace = false;
+
+        $blockqoutes = $dom->getElementsByTagName('blockquote');
+        if ($blockqoutes->length > 0) {
+            foreach ($blockqoutes as $blockqoute) {
+                $class = $blockqoute->getAttribute('class');
+                if ($class == 'instagram-media') {
+                    $instagramPermalink = $blockqoute->getAttribute('data-instgrm-permalink');
+                    $instagram = $dom->createElement('p', Str::before($instagramPermalink, '?'));
+                    $blockqoute->parentNode->replaceChild($instagram, $blockqoute);
+                } elseif ($class == 'twitter-tweet') {
+                    $link = $blockqoute->getElementsByTagName('a')->item(0);
+                    $twitter = $dom->createElement('p', $link->getAttribute('src'));
+                    $blockqoute->parentNode->replaceChild($twitter, $blockqoute);
+                }
+            }
+        }
+
+        $images = $dom->getElementsByTagName('img');
+        $iframes = $dom->getElementsByTagName('iframe');
+
+        if ($images->length > 0) {
+            dump($images);
+            foreach ($images as $image) {
+                $src = preg_replace('/(crop.*\/photo)/', 'photo', $image->getAttribute('src'));
+                $img = $dom->createElement('p', $src);
+                $image->parentNode->replaceChild($img, $image);
+            }
+        } elseif ($iframes->length > 0) {
+            foreach ($iframes as $iframe) {
+                $frame = $dom->createElement('p', $iframe->getAttribute('src'));
+                $iframe->parentNode->replaceChild($frame, $iframe);
             }
         }
 
@@ -180,7 +207,7 @@ class ExtractArticles extends Command
         $value = $body[1];
 
         // explode to collection
-        $value = collect(explode('</p>', $value))->transform(function ($paragraph) use ($medium, $article) {
+        $value = collect(explode('</p>', $value))->transform(function ($paragraph) use ($medium) {
 
             // remove enclosed paragraph tag
             $paragraph = trim(preg_replace('#<p(.*?)>#is', '', $paragraph));
@@ -189,67 +216,72 @@ class ExtractArticles extends Command
             $paragraph = trim(str_replace(['<hr>', '<hr />'], '', $paragraph));
 
             // remove \n (newlines)
-            $paragraph = trim(str_replace("\r\n", '', $paragraph));
+            $paragraph = trim(str_replace("\n", '', $paragraph));
 
             // replace image
-            if (preg_match('/<img[^>]* src=\"([^\"]*)\"[^>]*>/', $paragraph, $match)) {
-                $domImg = new \DOMDocument();
-                $domImg->loadHTML($match[0]);
-                $img = $domImg->getElementsByTagName('img')->item(0);
-                $src = preg_replace('/(crop.*\/photo)/', 'photo', $img->getAttribute('src'));
-                $image = @getimagesize($src);
-
-                $data = [
-                  'meta' => [
-                    'caption' => $img->getAttribute('data-caption'),
-                    'source' => $img->getAttribute('data-source'),
-                    'credit' => $img->getAttribute('data-author'),
-                    'filename' => null,
-                    'path' => null,
-                    'oUrl' => $src,
-                    'dimension' => [
-                      'height' => $image[0],
-                      'width' => $image[1]
-                    ],
-                    'size' => null,
-                    'creationDate' => $article->created_date
-                  ]
-                ];
-
-                $paragraph = Galleries::firstOrNew(['mediaId' => $medium->id, 'type' => 'images', 'meta.oUrl' => $src], $data)->toArray();
-            }
-
-            // replace iframe
-            elseif (preg_match('/<iframe.*src=\"(.*)\".*><\/iframe>/isU', $paragraph, $match)) {
-                $dom = new \DOMDocument();
-                $dom->loadHTML($match[0]);
-                $iframe = $dom->getElementsByTagName('iframe')->item(0);
-                $src = $iframe->getAttribute('src');
-
-                $data = [
-                  'meta' => [
-                    'title' => $iframe->getAttribute('data-title'),
-                    'description' => $iframe->getAttribute('data-description'),
-                    'youtubeId' => Str::after('https://www.youtube.com/embed/', $src),
-                    'cover' => [
-                      'name' => null,
-                      'path' => null,
-                    ],
-                    'embed' => $src,
-                    'published' => $article->created_date,
-                    'statistics' => [],
-                    'creationDate' => $article->created_date
-                  ]
-                ];
-
-                $paragraph = Galleries::firstOrNew(['mediaId' => $medium->id, 'type' => 'videos', 'meta.embed' => $src], $data)->toArray();
-            }
+            // if (preg_match('/<img[^>]* src=\"([^\"]*)\"[^>]*>/', $paragraph, $match)) {
+            //     $domImg = new \DOMDocument();
+            //     $domImg->loadHTML($match[0]);
+            //     $img = $domImg->getElementsByTagName('img')->item(0);
+            //     $src = preg_replace('/(crop.*\/photo)/', 'photo', $img->getAttribute('src'));
+            //     $image = @getimagesize($src);
+            //
+            //     $paragraph = [
+            //       'mediaId' => $medium->id,
+            //       'type' => 'images',
+            //       'meta' => [
+            //         'caption' => $img->getAttribute('data-caption'),
+            //         'source' => $img->getAttribute('data-source'),
+            //         'credit' => $img->getAttribute('data-author'),
+            //         'filename' => null,
+            //         'path' => null,
+            //         'oUrl' => $src,
+            //         'dimension' => [
+            //           'height' => $image[0],
+            //           'width' => $image[1]
+            //         ],
+            //         'size' => null,
+            //         'creationDate' => $article->created_date
+            //       ]
+            //     ];
+            //
+            // // $paragraph = Galleries::firstOrNew(['mediaId' => $medium->id, 'type' => 'images', 'meta.oUrl' => $src], $data)->toArray();
+            // }
+            //
+            // // replace iframe
+            // elseif (preg_match('/<iframe.*src=\"(.*)\".*><\/iframe>/isU', $paragraph, $match)) {
+            //     $dom = new \DOMDocument();
+            //     $dom->loadHTML($match[0]);
+            //     $iframe = $dom->getElementsByTagName('iframe')->item(0);
+            //     $src = $iframe->getAttribute('src');
+            //
+            //     $paragraph = [
+            //       'mediaId' => $medium->id,
+            //       'type' => 'videos',
+            //       'meta' => [
+            //         'title' => $iframe->getAttribute('data-title'),
+            //         'description' => $iframe->getAttribute('data-description'),
+            //         'youtubeId' => Str::after('https://www.youtube.com/embed/', $src),
+            //         'cover' => [
+            //           'name' => null,
+            //           'path' => null,
+            //         ],
+            //         'embed' => $src,
+            //         'published' => $article->created_date,
+            //         'statistics' => [],
+            //         'creationDate' => $article->created_date
+            //       ]
+            //     ];
+            //
+            // // $paragraph = Galleries::firstOrNew(['mediaId' => $medium->id, 'type' => 'videos', 'meta.embed' => $src], $data)->toArray();
+            // }
 
             return $paragraph;
         })->reject(function ($paragraph) {
             return $paragraph == '&nbsp;';
         })->filter()->all();
 
+        dd($value);
         return $value;
     }
 }

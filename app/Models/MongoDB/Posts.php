@@ -45,7 +45,7 @@ class Posts extends MongoDB
      *
      * @var array
      */
-    protected $with = ['media'];
+    protected $with = ['media', 'channel'];
 
     /**
      * The "booting" method of the model.
@@ -89,6 +89,14 @@ class Posts extends MongoDB
         return $this->belongsTo('App\Models\MongoDB\Media', 'mediaId', '_id');
     }
 
+    /**
+     * Get the channel that owns the articles.
+     */
+    public function channel()
+    {
+        return $this->belongsTo('App\Models\MongoDB\Channels', 'channelId', '_id');
+    }
+
     public function getTypeAttribute($value)
     {
         return self::type($value);
@@ -98,7 +106,7 @@ class Posts extends MongoDB
     {
         $collection = collect(['Articles', 'Images', 'Videos', 'Podcasts', 'Recipes', 'Pricelists', 'Charts', 'Pollings']);
         $lists = $collection->combine($collection->map(function ($item) {
-            return camel_case($item);
+            return Str::camel($item);
         }))->flip();
 
         return is_null($type) ? $lists : $lists->get($type);

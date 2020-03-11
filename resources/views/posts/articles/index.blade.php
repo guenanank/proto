@@ -32,8 +32,10 @@
             <thead class="thead-default">
                 <tr>
                     <th class="text-center">Title</th>
-                    <th class="text-center">Media</th>
-                    <th class="text-center">Published</th>
+                    <th class="text-center">Description</th>
+                    <th class="text-center">Channel</th>
+                    <th class="text-center">Keywords</th>
+                    <th class="text-center">Timestamps</th>
                 </tr>
             </thead>
         </table>
@@ -43,36 +45,95 @@
 
 @push('scripts')
 <script>
+    let pad = function(num, size) {
+        var s = num + "";
+        while (s.length < size) s = "0" + s;
+        return s;
+    }
+
+    let slug = function(str) {
+        str = str.replace(/^\s+|\s+$/g, ''); // trim
+        str = str.toLowerCase();
+
+        // remove accents, swap ñ for n, etc
+        var from = "àáãäâèéëêìíïîòóöôùúüûñç·/_,:;";
+        var to = "aaaaaeeeeiiiioooouuuunc------";
+
+        for (var i = 0, l = from.length; i < l; i++) {
+            str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+        }
+
+        return str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
+            .replace(/\s+/g, '-') // collapse whitespace and replace by -
+            .replace(/-+/g, '-'); // collapse dashes
+    }
+
+
     $('table#dataTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
             type: 'post',
             url: baseUrl + '/posts/dataTable',
-            data: { type: 'articles' }
+            data: {
+                type: 'articles'
+            }
         },
         columns: [{
-            name: 'headlines.title',
-            title: 'headlines.title'
+            data: 'headlines.title',
+            title: 'Article',
+
         }, {
-            name: 'media.name',
-            data: 'media.name'
+            data: 'headlines.description',
+            title: 'Description'
         }, {
-            name: 'published',
-            data: 'published'
+            data: 'headlines.tag',
+            title: 'Keywords'
+        }, {
+            data: 'channel.name',
+            title: 'Channel'
+        }, {
+            data: 'lastUpdate',
+            title: 'Timestamps'
         }],
         order: [
-            [2, 'desc']
+            [4, 'desc']
         ],
         columnDefs: [{
-          targets: 0,
-          render: function(data, type, row) {
-            return row.headlines.title;
-          }
-        }],
-        drawCallback: function(settings) {
-            $('table#dataTable thead').remove();
-        }
+            targets: 0,
+            orderable: false,
+            render: function(data, type, row) {
+                // console.log(row);
+                let article;
+                if (row.published) {
+                    article = '<a href="' + row.media.domain + '/read/' + pad(row.media.oId, 2) + row.oId + '/' + slug(row.headlines.title) +'" target="_blank">' + row.headlines.title + '</a>' +
+                        '<div><small>Published on ' + moment(row.published).format('lll') + '</small><p>Authored by ' + row.reporter + '</p></div>';
+                } else {
+                    article = row.headlines.title +
+                        '<div><p>Authored by ' + row.reporter + '</p></div>'
+                }
+                return article;
+            }
+        }, {
+            targets: 3,
+            render: function(data) {
+                if (typeof data == 'undefined') {
+                    return null;
+                }
+            }
+        }, {
+            targets: [1, 2, 3],
+            visible: false,
+        }, {
+            targets: 4,
+            orderable: false,
+            render: function(data, type, row) {
+                return '<p>' +
+                    '<em>Last updated ' + moment(row.lastUpdate).fromNow() + '</em><br />' +
+                    '<small>Created at ' + moment(row.creationDate).format('LL') + '</small>' +
+                    '</p>';
+            }
+        }]
     });
 </script>
 @endpush

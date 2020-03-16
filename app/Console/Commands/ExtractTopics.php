@@ -57,7 +57,7 @@ class ExtractTopics extends Command
     {
         // return Cache::forget('inTopic');
         $skip = Cache::get('inTopic', 0);
-        $interval = 200;
+        $interval = 1000;
         $total = $this->client->get($this->uri . 'count', [
           'query' => ['table' => 'topic']
         ])->getBody();
@@ -87,10 +87,11 @@ class ExtractTopics extends Command
             $field['published'] = Carbon::parse($topic->created_date);
             $field['meta']['description'] = empty($topic->description) ? null : $topic->description;
             $field['meta']['isBrandstory'] = (bool) is_null($topic->type_ads) ? false : true;
-            $field['creationDate'] = Carbon::parse($topic->created_date);
-            if(!$topic->status) {
-                $field['removedAt'] = Carbon::parse($topic->modified_date);
-            }
+            $field['creationDate'] = $topic->created_date;
+            // if($topic->status == 0) {
+            //     $field['removedAt'] = $topic->modified_date;
+            // }
+            $field['removedAt'] = null;
 
             if(!empty($topic->photo_url)  && filter_var($topic->photo_url, FILTER_VALIDATE_URL)) {
                 $aliasSubdomain = Str::after(Str::before($medium->domain, '.'), 'https://');

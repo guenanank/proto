@@ -35,7 +35,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('extract:music')->everyMinute()->between('3:00', '4:00')->runInBackground();
         $schedule->command('extract:video')->everyFifteenMinutes()->between('6:00', '17:00')->runInBackground();
         $schedule->command('extract:image')->everyMinute()->withoutOverlapping(5)->runInBackground();
-        $schedule->command('extract:article')->everyFiveMinutes();
+        $schedule->command('extract:article')->everyMinute();
+
+        // $schedule->command('extract:post')->everyMinute();
     }
 
     /**

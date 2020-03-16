@@ -106,7 +106,7 @@ class ExtractImages extends Command
             $aliasSubdomain = Str::after(Str::before($medium->domain, '.'), 'https://');
             $path = sprintf('%s/%s/images/%04d/%02d/%02d/', strtolower($medium->group->code), $aliasSubdomain, $created->year, $created->month, $created->day);
             $filename = empty($image->caption) ? $medium->name : $image->caption;
-            $field['mediaId'] = $medium->id;
+            
             $field['meta']['caption'] = $image->caption;
             $field['meta']['source'] = empty($image->source) ? null : $image->source;
             $field['meta']['credit'] = empty($image->author) ? null : $image->author;
@@ -121,7 +121,7 @@ class ExtractImages extends Command
                 $field['removedAt'] = Carbon::now();
             }
 
-            $imageModel = Galleries::withTrashed()->updateOrCreate(['type' => 'images', 'oId' => $image->id], $field);
+            $imageModel = Galleries::withTrashed()->updateOrCreate(['type' => 'images', 'mediaId' => $medium->id, 'oId' => $image->id], $field);
             Storage::put($field['meta']['path'], $img->encode('jpeg'), 'public');
             Cache::forget('galleries:' . $imageModel->id);
             Cache::forget('galleries:images:all');

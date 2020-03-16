@@ -35,6 +35,7 @@
                     <th class="text-center">Description</th>
                     <th class="text-center">Channel</th>
                     <th class="text-center">Keywords</th>
+                    <th class="text-center">Published</th>
                     <th class="text-center">Timestamps</th>
                 </tr>
             </thead>
@@ -81,17 +82,19 @@
         },
         columns: [{
             data: 'headlines.title',
-            title: 'Article',
-
+            title: 'Article'
         }, {
             data: 'headlines.description',
             title: 'Description'
         }, {
+            data: 'channel.name',
+            title: 'Channel'
+        }, {
             data: 'headlines.tag',
             title: 'Keywords'
         }, {
-            data: 'channel.name',
-            title: 'Channel'
+            data: 'published',
+            title: 'Published On'
         }, {
             data: 'lastUpdate',
             title: 'Timestamps'
@@ -103,29 +106,45 @@
             targets: 0,
             orderable: false,
             render: function(data, type, row) {
-                // console.log(row);
-                let article;
+                let article, badgePublished, title;
                 if (row.published) {
-                    article = '<a href="' + row.media.domain + '/read/' + pad(row.media.oId, 2) + row.oId + '/' + slug(row.headlines.title) +'" target="_blank">' + row.headlines.title + '</a>' +
-                        '<div><small>Published on ' + moment(row.published).format('lll') + '</small><p>Authored by ' + row.reporter + '</p></div>';
+                    badgePublished = row.published > moment().format('YYYY-MM-DD HH:mm:ss') ?
+                        '&nbsp;<span class="badge badge-secondary">Scheduled article</span>' :
+                        '<small>Published on ' + moment(row.published).format('lll') + '</small>';
+
+                    title = row.published > moment().format('YYYY-MM-DD HH:mm:ss') ?
+                        row.headlines.title :
+                        '<a href="' + row.media.domain + '/read/' + pad(row.media.oId, 2) + row.oId + '/' + slug(row.headlines.title) + '" target="_blank">' + row.headlines.title + '</a>'
+
+                    article = '<p class="font-weight-bold">' + title + '</p>' +
+                        '<div>' +
+                        badgePublished +
+                        '<p class="small mt5">Authored by ' + row.reporter + ', Published by ' + row.editor + '</p>' +
+                        '</div>';
                 } else {
                     article = row.headlines.title +
-                        '<div><p>Authored by ' + row.reporter + '</p></div>'
+                        '<div>' +
+                        '<span class="badge badge-warning">Draft</span>' +
+                        '<p class="small mt5">Authored by ' + row.reporter + '</p>' +
+                        '</div>';
                 }
-                return article;
+                return '<p>' + row.media.name + ' - ' + row.channel.name + '</p>' + article +
+                    '<div class="small">' +
+                    '<a class="text-gray-500 delete" href="' + baseUrl + '/posts/articles/' + row._id + '"><i class="fas fa fa-trash"></i></a>' +
+                    '&nbsp;|&nbsp;' +
+                    '<a class="text-gray-600" href="' + baseUrl + '/posts/articles/' + row._id + '/edit"><i class="fas fa fa-pencil-alt"></i>&nbsp;Edit</a>' +
+                    '</div>';
             }
         }, {
-            targets: 3,
+            targets: 2,
             render: function(data) {
-                if (typeof data == 'undefined') {
-                    return null;
-                }
+                return typeof data == 'undefined' ? null : data;
             }
         }, {
-            targets: [1, 2, 3],
-            visible: false,
+            targets: [1, 2, 3, 4],
+            visible: false
         }, {
-            targets: 4,
+            targets: 5,
             orderable: false,
             render: function(data, type, row) {
                 return '<p>' +

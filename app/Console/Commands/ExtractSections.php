@@ -55,7 +55,7 @@ class ExtractSections extends Command
     {
         // return Cache::forget('inChannel');
         $skip = Cache::get('inChannel', 0);
-        $interval = 200;
+        $interval = 1000;
         $total = $this->client->get($this->uri . 'count', [
           'query' => ['table' => 'section']
         ])->getBody();
@@ -82,7 +82,6 @@ class ExtractSections extends Command
                 $parent = Channels::withTrashed()->find($section->parent);
             }
 
-            $field['mediaId'] = $medium->id;
             $field['name'] = $section->name;
             $field['slug'] = $section->alias;
             $field['sub'] = !isset($parent) && empty($parent) ? null : $parent->id;;
@@ -93,12 +92,13 @@ class ExtractSections extends Command
             $field['meta']['description'] = empty($section->description) ? null : $section->description;
             $field['meta']['keywords'] = empty($section->keyword) ? null : $section->keyword;
             $field['meta']['cover'] = null;
-            $field['creationDate'] = Carbon::parse($section->created_date);
-            if(!$section->status) {
-                $field['removedAt'] = Carbon::parse($section->modified_date);
-            }
+            $field['creationDate'] = $section->created_date;
+            // if($section->status == 0) {
+            //     $field['removedAt'] = $section->modified_date;
+            // }
+            $field['removedAt'] = null;
 
-            $channel = Channels::withTrashed()->updateOrCreate(['oId' => $section->id], $field);
+            $channel = Channels::withTrashed()->updateOrCreate(['mediaId' => $medium->id, 'oId' => $section->id], $field);
 
             Cache::forget('channels:' . $channel->id);
             Cache::forget('channels:all');

@@ -16,14 +16,14 @@ use App\Models\MongoDB\Channels;
 use App\Models\MongoDB\Galleries;
 use App\Models\MongoDB\Posts;
 
-class ExtractArticles extends Command
+class ExtractPosts extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'extract:article';
+    protected $signature = 'extract:post';
 
     /**
      * The console command description.
@@ -59,9 +59,9 @@ class ExtractArticles extends Command
      */
     public function handle()
     {
-        // return Cache::forget('inArticle');
-        $skip = Cache::get('inArticle', 0);
-        $interval = 500;
+        return Cache::forget('inPost');
+        $skip = Cache::get('inPost', 0);
+        $interval = 20;
 
         $media = Cache::get('media:withTrashed', function () {
             return Media::withTrashed()->with('group')->get();
@@ -76,29 +76,29 @@ class ExtractArticles extends Command
         });
 
         $total = $this->client->get($this->uri . 'count', [
-           'query' => [
-             'table' => 'article',
-             'where' => true,
-             'field' => 'created_date',
-             'operand' => '>=',
-             'param' => '0000-00-00 00:00:00'
-           ]
-         ])->getBody();
+          'query' => [
+            'table' => 'article',
+            'where' => true,
+            'field' => 'created_date',
+            'operand' => '>=',
+            'param' => '0000-00-00 00:00:00'
+          ]
+        ])->getBody();
 
         if ($skip >= (int) $total->getContents()) {
-            return Cache::forget('inArticle');
+            return Cache::forget('inPost');
         }
 
         $client = $this->client->get($this->uri . 'articles', [
-           'query' => [
-             'field' => 'created_date',
-             'operand' => '>=',
-             'param' => '0000-00-00 00:00:00',
-             'skip' => $skip,
-             'take' => $interval,
-             'order' => 'created_date'
-           ]
-         ])->getBody();
+          'query' => [
+            'field' => 'created_date',
+            'operand' => '>=',
+            'param' => '0000-00-00 00:00:00',
+            'skip' => $skip,
+            'take' => $interval,
+            'order' => 'created_date'
+          ]
+        ])->getBody();
 
         foreach (json_decode($client->getContents()) as $article) {
             $medium = $media->where('oId', $article->site->id)->first();
@@ -143,7 +143,7 @@ class ExtractArticles extends Command
             // $body = $article->content;
             $body = collect(explode('</p>', $match[1]))->transform(function ($paragraph) {
 
-                 // remove enclosed paragraph tag
+                // remove enclosed paragraph tag
                 $paragraph = trim(preg_replace('#<p(.*?)>#is', '', $paragraph));
 
                 //remove hr
@@ -158,38 +158,38 @@ class ExtractArticles extends Command
             })->filter()->all();
 
             $data = [
-               'type' => 'articles',
-               'mediaId' => $medium->id,
-               'channelId' => $channel,
-               'oId' => $article->id,
-               'headlines' => [
-                 'title' => $article->title,
-                 'subtitle' => null,
-                 'description' => $article->description,
-                 'tag' => collect($article->tags)->pluck('name')->toArray()
-               ],
-               'editorials' => [
-                 'welcomePage' => $article->allow_wp,
-                 'headline' => !is_null($article->headline),
-                 'choice' => !is_null($article->choice),
-                 'advertorial' => (bool) $article->section->name === 'Advertorial',
-                 'source' => collect($article->sources)->map(function ($source) {
-                     return [
-                       'url' => $source->website,
-                       'name' => $source->name
-                     ];
-                 })->toArray()
-               ],
-               'published' => $article->published_date,
-               'body' => $body,
-               // 'body' => $this->getContentAttribute($article, $medium),
-               'reporter' => collect($article->authors)->pluck('id')->toArray(),
-               'editor' => $article->editor->id,
-               'relates' => collect($article->relates)->pluck('id')->toArray(),
-               'commentable' => $article->allow_comment,
-               'topics' => collect($article->topics)->pluck('id')->toArray(),
-               'creationDate' => $article->created_date,
-             ];
+              'type' => 'articles',
+              'mediaId' => $medium->id,
+              'channelId' => $channel,
+              'oId' => $article->id,
+              'headlines' => [
+                'title' => $article->title,
+                'subtitle' => null,
+                'description' => $article->description,
+                'tag' => collect($article->tags)->pluck('name')->toArray()
+              ],
+              'editorials' => [
+                'welcomePage' => $article->allow_wp,
+                'headline' => !is_null($article->headline),
+                'choice' => !is_null($article->choice),
+                'advertorial' => (bool) $article->section->name === 'Advertorial',
+                'source' => collect($article->sources)->map(function ($source) {
+                    return [
+                      'url' => $source->website,
+                      'name' => $source->name
+                    ];
+                })->toArray()
+              ],
+              'published' => $article->published_date,
+              'body' => $body,
+              // 'body' => $this->getContentAttribute($article, $medium),
+              'reporter' => collect($article->authors)->pluck('id')->toArray(),
+              'editor' => $article->editor->id,
+              'relates' => collect($article->relates)->pluck('id')->toArray(),
+              'commentable' => $article->allow_comment,
+              'topics' => collect($article->topics)->pluck('id')->toArray(),
+              'creationDate' => $article->created_date,
+            ];
 
             if ($article->basket_id == 4) {
                 $data['removedAt'] = Carbon::now()->toDateTimeString();
@@ -201,7 +201,7 @@ class ExtractArticles extends Command
             $this->info(is_null($articleModel) ? 'empty' : sprintf('Extracted %s', $articleModel->headlines['title']));
         }
 
-        Cache::increment('inArticle', $interval);
+        Cache::increment('inPost', $interval);
     }
 
     /*
